@@ -13,16 +13,14 @@ import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
 import appeng.api.parts.IPartCollisionHelper;
 import appeng.api.parts.IPartRenderHelper;
-import appeng.api.parts.PartItemStack;
+import appeng.api.storage.IMEMonitor;
 import appeng.api.storage.data.IAEItemStack;
 import appeng.api.util.AEColor;
-import cpw.mods.fml.common.registry.GameRegistry;
+import appeng.util.item.AEItemStack;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import extracells.container.ContainerOreDictExport;
 import extracells.gui.GuiOreDictExport;
-import extracells.registries.ItemEnum;
-import extracells.registries.PartEnum;
 import extracells.render.TextureManager;
 import extracells.util.ItemUtils;
 import net.minecraft.client.renderer.RenderBlocks;
@@ -39,119 +37,210 @@ import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.oredict.OreDictionary;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 public class PartOreDictExporter extends PartECBase implements IGridTickable {
 
-	public String filter = "";
+	private String filter = "";
+
+	// disabled
+	// private Predicate<ItemStack> filterPredicate = null;
+	/**
+	 * White list of itemstacks to extract. OreDict only mode.
+	 */
+	private ItemStack[] oreDictFilteredItems = new ItemStack[0];
 
 	@Override
 	public int cableConnectionRenderTo() {
 		return 5;
 	}
 
-	private boolean checkItem(IAEItemStack s) {
-		if (s == null || this.filter.equals(""))
-			return false;
+	public String getFilter() {
+		return filter;
+	}
 
-		int[] ids = OreDictionary.getOreIDs(s.getItemStack());
-		GameRegistry.UniqueIdentifier identifier = GameRegistry.findUniqueIdentifierFor(s.getItem());
+	public void setFilter(String filter) {
+		this.filter = filter;
+		updateFilter();
+		saveData();
+	}
 
-		String[] filters = StringUtils.split(this.filter, '&');
+	/**
+	 * Call when the filter string has changed to parse and recompile the filter.
+	 */
+	private void updateFilter() {
+		if (!this.filter.trim().isEmpty()) {
+			//ArrayList<String> matchingNames = new ArrayList<>();
+			Predicate<ItemStack> matcher = null;
 
-		boolean result = true;
-		for (String filter : filters) {
-			filter = filter.trim();
+			String[] filters = this.filter.split("[&|]");
+			String lastFilter = null;
 
-			boolean exclude = filter.startsWith("!");
-			if (exclude) {
-				filter = filter.substring(1);
+			for (String filter : filters) {
+				filter = filter.trim();
+				boolean negated = filter.startsWith("!");
+				if (negated)
+					filter = filter.substring(1);
+
+				Predicate<ItemStack> test = filterToItemStackPredicate(filter);
+
+				if (negated)
+					test = test.negate();
+
+				if (matcher == null) {
+					matcher = test;
+					lastFilter = filter;
+				} else {
+					int endLast = this.filter.indexOf(lastFilter) + lastFilter.length();
+					int startThis = this.filter.indexOf(filter);
+					boolean or = this.filter.substring(endLast, startThis).contains("|");
+
+					if (or) {
+						matcher = matcher.or(test);
+					} else {
+						matcher = matcher.and(test);
+					}
+				}
 			}
 
-			if (filter.startsWith("@")) {
-				filter = filter.substring(1);
-				if (!CheckFilter(exclude, filter, identifier.modId)) result = false;
-			} else if (filter.startsWith("~")) {
-				filter = filter.substring(1);
-				if (!CheckFilter(exclude, filter, identifier.name)) result = false;
-			} else {
-				if (ids.length == 0) {
-					result = false;
-				} else {
-					boolean oreDictResult = true;
-					for (int id : ids) {
-						if (!CheckFilter(exclude, filter, OreDictionary.getOreName(id))) {
-							oreDictResult = false;
-						} else if (!exclude) {
-							oreDictResult = true;
-							break;
-						}
-					}
+			if (matcher == null) {
+				//filterPredicate = null;
+				oreDictFilteredItems = new ItemStack[0];
+				return;
+			}
 
-					if (!oreDictResult) result = false;
+			//Mod name and path evaluation can only be done during tick, can't precompile whitelist for this.
+			if (!this.filter.contains("@") && !this.filter.contains("~")) {
+				//Precompiled whitelist of oredict itemstacks.
+				ArrayList<ItemStack> filtered = new ArrayList<>();
+				for (String name : OreDictionary.getOreNames())
+					for (ItemStack s : OreDictionary.getOres(name))
+						if (matcher.test(s)) {
+							filtered.add(s);
+						}
+				oreDictFilteredItems = filtered.toArray(oreDictFilteredItems);
+
+			} else {
+				// mod filtering disabled
+				//filterPredicate = matcher;
+				this.oreDictFilteredItems = new ItemStack[0];
+			}
+		} else {
+			//this.filterPredicate = null;
+			this.oreDictFilteredItems = new ItemStack[0];
+		}
+	}
+
+	/**
+	 * Given a filter string, returns a predicate that matches a given ItemStack
+	 *
+	 * @param filter Filter string.
+	 * @return Predicate for filter string.
+	 */
+	private Predicate<ItemStack> filterToItemStackPredicate(String filter) {
+		/*if (filter.startsWith("@")) {
+			final Predicate<String> test = filterToPredicate(filter.substring(1));
+			return (is) -> is != null &&
+					Optional.ofNullable(is.getItem(). getRegistryName())
+							.map(ResourceLocation::getResourceDomain)
+							.map(test::test)
+							.orElse(false);
+		} else if (filter.startsWith("~")) {
+			final Predicate<String> test = filterToPredicate(filter.substring(1));
+			return (is) -> is != null &&
+					Optional.ofNullable(is.getItem().getRegistryName())
+							.map(ResourceLocation::getPath)
+							.map(test::test)
+							.orElse(false);
+		} else {*/
+		final Predicate<String> test = filterToPredicate(filter);
+		return (is) -> is != null &&
+				IntStream.of(OreDictionary.getOreIDs(is))
+						.mapToObj(OreDictionary::getOreName)
+						.anyMatch(test);
+		//}
+	}
+
+	/**
+	 * Given a filter string, returns a Predicate that matches a string.
+	 *
+	 * @param filter Filter string
+	 * @return Predicate for filter string.
+	 */
+	private Predicate<String> filterToPredicate(String filter) {
+		int numStars = StringUtils.countMatches(filter, "*");
+		if (numStars == filter.length()) {
+			return (str) -> true;
+		} else if (filter.length() > 2 && filter.startsWith("*") && filter.endsWith("*") && numStars == 2) {
+			final String pattern = filter.substring(1, filter.length() - 1);
+			return (str) -> str.contains(pattern);
+		} else if (filter.length() >= 2 && filter.startsWith("*") && numStars == 1) {
+			final String pattern = filter.substring(1);
+			return (str) -> str.endsWith(pattern);
+		} else if (filter.length() >= 2 && filter.endsWith("*") && numStars == 1) {
+			final String pattern = filter.substring(0, filter.length() - 1);
+			return (str) -> str.startsWith(pattern);
+		} else if (numStars == 0) {
+			return (str) -> str.equals(filter);
+		} else {
+			String filterRegexFragment = filter.replace("*", ".*");
+			String regexPattern = "^" + filterRegexFragment + "$";
+			final Pattern pattern = Pattern.compile(regexPattern);
+			return pattern.asPredicate();
+		}
+	}
+
+	public boolean doWork(int rate, int ticksSinceLastCall) {
+		int amount = Math.min(rate * ticksSinceLastCall, 64);
+		IStorageGrid storage = getStorageGrid();
+		assert storage != null;
+		IMEMonitor<IAEItemStack> inv = storage.getItemInventory();
+		MachineSource src = new MachineSource(this);
+
+/*		if (this.filterPredicate != null) {
+			//Tick-time filter evaluation.
+			IItemList<IAEItemStack> items = inv.getStorageList();
+			for (IAEItemStack stack : items) {
+				if (stack == null || !this.filterPredicate.test(stack.createItemStack()))
+					continue;
+				IAEItemStack toExtract = stack.copy();
+				toExtract.setStackSize(amount);
+				IAEItemStack extracted = inv.extractItems(toExtract, Actionable.SIMULATE, src);
+				if (extracted != null) {
+					IAEItemStack exported = exportStack(extracted.copy());
+					if (exported != null) {
+						inv.extractItems(exported, Actionable.MODULATE, src);
+						return true;
+					}
+				}
+			}
+			return false;
+		} else {*/
+		//Precompiled oredict whitelist
+		for (ItemStack is : this.oreDictFilteredItems) {
+			if (is == null || amount == 0)
+				continue;
+
+			ItemStack toExtract = is.copy();
+			toExtract.stackSize = amount;
+
+			IAEItemStack extracted = inv.extractItems(AEItemStack.create(toExtract), Actionable.SIMULATE, src);
+			if (extracted != null) {
+				IAEItemStack exported = exportStack(extracted.copy());
+				if (exported != null) {
+					inv.extractItems(exported, Actionable.MODULATE, src);
+					return true;
 				}
 			}
 		}
-
-		return result;
-	}
-
-	private boolean CheckFilter(Boolean exclude, String filter, String name) {
-		if (filter.startsWith("*") && filter.endsWith("*")) {
-			filter = filter.replace("*", "");
-			if (filter.equals(""))
-				return true;
-
-			if (exclude && name.contains(filter))
-				return false;
-			if (!exclude && !name.contains(filter))
-				return false;
-		} else if (filter.startsWith("*")) {
-			filter = filter.replace("*", "");
-			if (exclude && name.endsWith(filter))
-				return false;
-			if (!exclude && !name.endsWith(filter))
-				return false;
-		} else if (filter.endsWith("*")) {
-			filter = filter.replace("*", "");
-			if (exclude && name.startsWith(filter))
-				return false;
-			if (!exclude && !name.startsWith(filter))
-				return false;
-		} else {
-			if (exclude && name.equals(filter))
-				return false;
-			if (!exclude && !name.equals(filter))
-				return false;
-		}
-
-		return true;
-	}
-
-	public boolean doWork(int rate, int TicksSinceLastCall) {
-		int amount = rate * TicksSinceLastCall >= 64 ? 64 : rate
-				* TicksSinceLastCall;
-		IStorageGrid storage = getStorageGrid();
-		IAEItemStack stack = null;
-		for (IAEItemStack s : storage.getItemInventory().getStorageList()) {
-			if (s.getStackSize() > 0 && checkItem(s.copy())) {  // skip craftable items not in storage
-				stack = s.copy();
-				break;
-			}
-		}
-		if (stack == null)
-			return false;
-		stack.setStackSize(amount);
-		stack = storage.getItemInventory().extractItems(stack.copy(),
-				Actionable.SIMULATE, new MachineSource(this));
-		if (stack == null)
-			return false;
-		IAEItemStack exported = exportStack(stack.copy());
-		if (exported == null)
-			return false;
-		storage.getItemInventory().extractItems(exported, Actionable.MODULATE,
-				new MachineSource(this));
-		return true;
+		return false;
+		//}
 	}
 
 	public IAEItemStack exportStack(IAEItemStack stack0) {
@@ -182,13 +271,12 @@ public class PartOreDictExporter extends PartECBase implements IGridTickable {
 							int outStack = (int) stack.getStackSize();
 							if (max == current)
 								continue;
+							ItemStack s = inv.getStackInSlot(i).copy();
 							if (current + outStack <= max) {
-								ItemStack s = inv.getStackInSlot(i).copy();
 								s.stackSize = s.stackSize + outStack;
 								inv.setInventorySlotContents(i, s);
 								return stack0;
 							} else {
-								ItemStack s = inv.getStackInSlot(i).copy();
 								s.stackSize = max;
 								inv.setInventorySlotContents(i, s);
 								stack.setStackSize(max - current);
@@ -212,13 +300,12 @@ public class PartOreDictExporter extends PartECBase implements IGridTickable {
 							int outStack = (int) stack.getStackSize();
 							if (max == current)
 								continue;
+							ItemStack s = inv.getStackInSlot(i).copy();
 							if (current + outStack <= max) {
-								ItemStack s = inv.getStackInSlot(i).copy();
 								s.stackSize = s.stackSize + outStack;
 								inv.setInventorySlotContents(i, s);
 								return stack0;
 							} else {
-								ItemStack s = inv.getStackInSlot(i).copy();
 								s.stackSize = max;
 								inv.setInventorySlotContents(i, s);
 								stack.setStackSize(max - current);
@@ -244,18 +331,6 @@ public class PartOreDictExporter extends PartECBase implements IGridTickable {
 	@Override
 	public Object getClientGuiElement(EntityPlayer player) {
 		return new GuiOreDictExport(player, this);
-	}
-
-	@Override
-	public ItemStack getItemStack(PartItemStack type) {
-		ItemStack is = new ItemStack(ItemEnum.PARTITEM.getItem(), 1,
-				PartEnum.getPartID(this));
-		if (type != PartItemStack.Break) {
-			NBTTagCompound tag = new NBTTagCompound();
-			tag.setString("filter", this.filter);
-			is.setTagCompound(tag);
-		}
-		return is;
 	}
 
 	@Override
@@ -322,6 +397,7 @@ public class PartOreDictExporter extends PartECBase implements IGridTickable {
 		super.readFromNBT(data);
 		if (data.hasKey("filter"))
 			this.filter = data.getString("filter");
+		updateFilter();
 	}
 
 	@SideOnly(Side.CLIENT)
@@ -356,7 +432,7 @@ public class PartOreDictExporter extends PartECBase implements IGridTickable {
 	@SideOnly(Side.CLIENT)
 	@Override
 	public void renderStatic(int x, int y, int z, IPartRenderHelper rh,
-			RenderBlocks renderer) {
+							 RenderBlocks renderer) {
 		Tessellator ts = Tessellator.instance;
 		rh.setTexture(TextureManager.EXPORT_SIDE.getTexture());
 		rh.setBounds(6, 6, 12, 10, 10, 13);
@@ -386,7 +462,7 @@ public class PartOreDictExporter extends PartECBase implements IGridTickable {
 
 	@Override
 	public final TickRateModulation tickingRequest(IGridNode node,
-			int TicksSinceLastCall) {
+												   int TicksSinceLastCall) {
 		if (isActive())
 			return doWork(10, TicksSinceLastCall) ? TickRateModulation.FASTER
 					: TickRateModulation.SLOWER;
