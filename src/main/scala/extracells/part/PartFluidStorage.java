@@ -50,7 +50,7 @@ public class PartFluidStorage extends PartECBase implements ICellContainer, IInv
 	private HashMap<FluidStack, Integer> fluidList = new HashMap<FluidStack, Integer>();
 	private int priority = 0;
 	protected HandlerPartStorageFluid handler = new HandlerPartStorageFluid(this);
-	private Fluid[] filterFluids = new Fluid[54];
+	private Fluid[] filterFluids = new Fluid[54]; //total number 54
 	private AccessRestriction access = AccessRestriction.READ_WRITE;
 	private ECPrivateInventory upgradeInventory = new ECPrivateInventory("", 1, 1, this) {
 
@@ -176,7 +176,7 @@ public class PartFluidStorage extends PartECBase implements ICellContainer, IInv
 	public void readFromNBT(NBTTagCompound data) {
 		super.readFromNBT(data);
 		this.priority = data.getInteger("priority");
-		for (int i = 0; i < 9; i++) {
+		for (int i = 0; i < 54; i++) { //total number 54
 			this.filterFluids[i] = FluidRegistry.getFluid(data.getString("FilterFluid#" + i));
 		}
 		if (data.hasKey("access")) {
@@ -285,7 +285,7 @@ public class PartFluidStorage extends PartECBase implements ICellContainer, IInv
 	public void writeToNBT(NBTTagCompound data) {
 		super.writeToNBT(data);
 		data.setInteger("priority", this.priority);
-		for (int i = 0; i < this.filterFluids.length; i++) {
+		for (int i = 0; i < this.filterFluids.length; i++) {//total number 54
 			Fluid fluid = this.filterFluids[i];
 			if (fluid != null)
 				data.setString("FilterFluid#" + i, fluid.getName());
