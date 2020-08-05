@@ -1,12 +1,14 @@
 package extracells.gui;
 
+import appeng.api.config.Settings;
 import appeng.api.storage.data.IAEFluidStack;
+import appeng.api.util.IConfigManager;
 import appeng.client.gui.widgets.GuiTabButton;
-import appeng.client.gui.widgets.ITooltip;
 import extracells.Extracells;
 import extracells.api.ECApi;
 import extracells.container.ContainerFluidTerminal;
 import extracells.gui.widget.FluidWidgetComparator;
+import extracells.gui.widget.GuiImgButton;
 import extracells.gui.widget.fluid.AbstractFluidWidget;
 import extracells.gui.widget.fluid.IFluidSelectorContainer;
 import extracells.gui.widget.fluid.IFluidSelectorGui;
@@ -18,6 +20,7 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StatCollector;
 import org.lwjgl.input.Keyboard;
@@ -153,16 +156,50 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
     }
 
     @Override
-    public void initGui() {
+    public void drawScreen(int par1, int par2, float par3) {
+        super.drawScreen(par1, par2, par3);
+        drawTooltip(par1, par2);
+    }
 
+    private void drawTooltip(int x2, int y2) {
+        int xStart = (width - xSize) / 2;
+        int yStart = (height - ySize) / 2;
+        int x = x2 - xStart;
+        int y = y2 - yStart;
+        List<String> list = new ArrayList<String>();
+        if (x >= -17 && x <= -1) {
+            if (y >= 5 && y <= 21) {
+                list.add("Sort by");
+                list.add(EnumChatFormatting.GRAY + "Total capacity (9..1)");
+            }
+            if (y >= 25 && y <= 41) {
+                list.add("Sort by");
+                list.add(EnumChatFormatting.GRAY + "Total capacity (1..9)");
+            }
+            if (y >= 45 && y <= 61) {
+                list.add("Sort by");
+                list.add(EnumChatFormatting.GRAY + "Name fluids (A..z)");
+            }
+            if (y >= 65 && y <= 81) {
+                list.add("Sort by");
+                list.add(EnumChatFormatting.GRAY + "Name fluids (z..A)");
+            }
+        }
+        if (!list.isEmpty())
+            drawHoveringText(list, x2, y2, fontRendererObj);
+    }
+
+    @Override
+    public void initGui() {
+        IConfigManager configSrc;
         super.initGui();
         Mouse.getDWheel();
         GuiTabButton craftingStatusBtn;
         this.buttonList.clear();
-        this.buttonList.add(new GuiButton(0, this.guiLeft - 30, this.guiTop, 30, 20, "9..1"));
-        this.buttonList.add(new GuiButton(1, this.guiLeft - 30, this.guiTop + 20, 30, 20, "1..9"));
-        this.buttonList.add(new GuiButton(2, this.guiLeft - 30, this.guiTop + 40, 30, 20, "A..z"));
-        this.buttonList.add(new GuiButton(3, this.guiLeft - 30, this.guiTop + 60, 30, 20, "z..A"));
+        this.buttonList.add(new GuiImgButton(0, 0, 0, this.guiLeft - 17, this.guiTop +   5, "Total capacity (9..1)"));
+        this.buttonList.add(new GuiImgButton(1, 16, 0, this.guiLeft - 17, this.guiTop +  25, "Total capacity (1..9)"));
+        this.buttonList.add(new GuiImgButton(2, 0, 16, this.guiLeft - 17, this.guiTop +  45, "Name fluids (A..z)"));
+        this.buttonList.add(new GuiImgButton(3, 16, 16, this.guiLeft - 17, this.guiTop +  65, "Name fluids (z..A)"));
 
         updateFluids();
         this.searchbar = new GuiTextField(this.fontRendererObj,
