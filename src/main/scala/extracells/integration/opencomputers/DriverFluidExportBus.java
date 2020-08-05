@@ -8,13 +8,13 @@ import extracells.registries.ItemEnum;
 import extracells.registries.PartEnum;
 import extracells.util.FluidUtil;
 import li.cil.oc.api.Network;
-import li.cil.oc.api.driver.EnvironmentAware;
+import li.cil.oc.api.driver.EnvironmentProvider;
 import li.cil.oc.api.driver.NamedBlock;
+import li.cil.oc.api.driver.SidedBlock;
 import li.cil.oc.api.internal.Database;
 import li.cil.oc.api.machine.Arguments;
 import li.cil.oc.api.machine.Callback;
 import li.cil.oc.api.machine.Context;
-import li.cil.oc.api.network.Environment;
 import li.cil.oc.api.network.Node;
 import li.cil.oc.api.network.Visibility;
 import li.cil.oc.api.prefab.ManagedEnvironment;
@@ -26,21 +26,21 @@ import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 
-public class DriverFluidExportBus implements li.cil.oc.api.driver.Block, EnvironmentAware{
+public class DriverFluidExportBus implements SidedBlock{
 
 	@Override
-	public boolean worksWith(World world, int x, int y, int z) {
-		return getExportBus(world, x, y, z, ForgeDirection.UNKNOWN) != null;
+	public boolean worksWith(World world, int x, int y, int z, ForgeDirection side) {
+		return getExportBus(world, x, y, z, side) != null;
 	}
 
 	@Override
-	public ManagedEnvironment createEnvironment(World world, int x, int y, int z) {
+	public ManagedEnvironment createEnvironment(World world, int x, int y, int z, ForgeDirection side) {
 		TileEntity tile = world.getTileEntity(x, y, z);
 		if (tile == null || (!(tile instanceof IPartHost)))
 			return null;
-		return new Enviroment((IPartHost) tile);
+		return new Environment((IPartHost) tile);
 	}
-	
+
 	private static PartFluidExport getExportBus(World world, int x, int y, int z, ForgeDirection dir){
 		TileEntity tile = world.getTileEntity(x, y, z);
 		if (tile == null || (!(tile instanceof IPartHost)))
@@ -58,18 +58,18 @@ public class DriverFluidExportBus implements li.cil.oc.api.driver.Block, Environ
 			return part == null ? null : part instanceof PartGasExport ? null :(PartFluidExport) part;
 		}
 	}
-	
-	public class Enviroment extends ManagedEnvironment implements NamedBlock{
-		
+
+	public class Environment extends ManagedEnvironment implements NamedBlock{
+
 		protected final TileEntity tile;
 		protected final IPartHost host;
-		
-		public Enviroment(IPartHost host){
+
+		Environment(IPartHost host){
 			tile = (TileEntity) host;
 			this.host = host;
 			setNode(Network.newNode(this, Visibility.Network).
-	                withComponent("me_exportbus").
-	                create());
+					withComponent("me_exportbus").
+					create());
 		}
 
 		@Callback(doc = "function(side:number, [ slot:number]):table -- Get the configuration of the fluid export bus pointing in the specified direction.")
@@ -89,9 +89,9 @@ public class DriverFluidExportBus implements li.cil.oc.api.driver.Block, Environ
 			}catch(Throwable e){
 				return new Object[]{null, "Invalid slot"};
 			}
-			
+
 		}
-		
+
 		@Callback(doc = "function(side:number[, slot:number][, database:address, entry:number]):boolean -- Configure the fluid export bus pointing in the specified direction to export fluid stacks matching the specified descriptor.")
 		public Object[] setFluidExportConfiguration(Context context, Arguments args){
 			ForgeDirection dir = ForgeDirection.getOrientation(args.checkInteger(0));
@@ -127,8 +127,7 @@ public class DriverFluidExportBus implements li.cil.oc.api.driver.Block, Environ
 				throw new IllegalArgumentException("no such component");
 			if (!(node instanceof Component))
 				throw new IllegalArgumentException("no such component");
-			Component component = (Component) node;
-			Environment env = node.host();
+			li.cil.oc.api.network.Environment env = node.host();
 			if (!(env instanceof Database))
 				throw new IllegalArgumentException("not a database");
 			Database database = (Database) env;
@@ -149,7 +148,7 @@ public class DriverFluidExportBus implements li.cil.oc.api.driver.Block, Environ
 				return new Object[]{false, "invalid slot"};
 			}
 		}
-		
+
 		@Callback(doc = "function(side:number, amount:number):boolean -- Make the fluid export bus facing the specified direction perform a single export operation.")
 		public Object[] exportFluid(Context context, Arguments args){
 			ForgeDirection dir = ForgeDirection.getOrientation(args.checkInteger(0));
@@ -176,16 +175,17 @@ public class DriverFluidExportBus implements li.cil.oc.api.driver.Block, Environ
 		public int priority() {
 			return 2;
 		}
-		
+
 	}
-	
-	@Override
-	public Class<? extends Environment> providedEnvironment(ItemStack stack) {
-		if(stack == null)
+	static class Provider implements EnvironmentProvider {
+		@Override
+		public Class<? extends li.cil.oc.api.network.Environment> getEnvironment(ItemStack stack) {
+			if (stack == null)
+				return null;
+			if (stack.getItem() == ItemEnum.PARTITEM.getItem() && stack.getItemDamage() == PartEnum.FLUIDEXPORT.ordinal())
+				return Environment.class;
 			return null;
-		if(stack.getItem() == ItemEnum.PARTITEM.getItem() && stack.getItemDamage() == PartEnum.FLUIDEXPORT.ordinal())
-			return Enviroment.class;
-		return null;
+		}
 	}
 
 }
