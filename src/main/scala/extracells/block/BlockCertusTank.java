@@ -53,7 +53,7 @@ public class BlockCertusTank extends BlockEC {
 	public ItemStack getDropWithNBT(World world, int x, int y, int z) {
 		NBTTagCompound tileEntity = new NBTTagCompound();
 		TileEntity worldTE = world.getTileEntity(x, y, z);
-		if (worldTE instanceof TileEntityCertusTank) {
+		if (worldTE != null && worldTE instanceof TileEntityCertusTank) {
 			ItemStack dropStack = new ItemStack(
 					BlockEnum.CERTUSTANK.getBlock(), 1);
 
@@ -73,15 +73,15 @@ public class BlockCertusTank extends BlockEC {
 	@Override
 	public IIcon getIcon(int side, int b) {
 		switch (b) {
-		case 1:
-			return this.sideTopIcon;
-		case 2:
-			return this.sideBottomIcon;
-		case 3:
-			return this.sideMiddleIcon;
-		default:
-			return side == 0 ? this.bottomIcon : side == 1 ? this.topIcon
-					: this.sideIcon;
+			case 1:
+				return this.sideTopIcon;
+			case 2:
+				return this.sideBottomIcon;
+			case 3:
+				return this.sideMiddleIcon;
+			default:
+				return side == 0 ? this.bottomIcon : side == 1 ? this.topIcon
+						: this.sideIcon;
 		}
 	}
 
@@ -117,15 +117,15 @@ public class BlockCertusTank extends BlockEC {
 
 	@Override
 	public boolean onBlockActivated(World worldObj, int x, int y, int z,
-			EntityPlayer entityplayer, int blockID, float offsetX,
-			float offsetY, float offsetZ) {
+									EntityPlayer entityplayer, int blockID, float offsetX,
+									float offsetY, float offsetZ) {
 		ItemStack current = entityplayer.inventory.getCurrentItem();
 
 		if (entityplayer.isSneaking() && current != null) {
 			try {
 				if (current.getItem() instanceof IToolWrench
 						&& ((IToolWrench) current.getItem()).canWrench(
-								entityplayer, x, y, z)) {
+						entityplayer, x, y, z)) {
 					dropBlockAsItem(worldObj, x, y, z,
 							getDropWithNBT(worldObj, x, y, z));
 					worldObj.setBlockToAir(x, y, z);
@@ -138,7 +138,7 @@ public class BlockCertusTank extends BlockEC {
 			}
 			if (current.getItem() instanceof IAEWrench
 					&& ((IAEWrench) current.getItem()).canWrench(current,
-							entityplayer, x, y, z)) {
+					entityplayer, x, y, z)) {
 				dropBlockAsItem(worldObj, x, y, z,
 						getDropWithNBT(worldObj, x, y, z));
 				worldObj.setBlockToAir(x, y, z);
@@ -196,14 +196,17 @@ public class BlockCertusTank extends BlockEC {
 
 					if (liquid != null) {
 						if (!entityplayer.capabilities.isCreativeMode) {
-							if (current.stackSize == 1) {
-								entityplayer.inventory.mainInventory[entityplayer.inventory.currentItem] = filled;
+							if (current.stackSize > 1) {
+								if (!entityplayer.inventory.addItemStackToInventory(filled)) {
+									return false;
+								} else {
+									entityplayer.inventory.mainInventory[entityplayer.inventory.currentItem].stackSize -= 1;
+								}
 							} else {
-								entityplayer.inventory.mainInventory[entityplayer.inventory.currentItem].stackSize--;
-								if (!entityplayer.inventory.addItemStackToInventory(filled))
-									entityplayer.entityDropItem(filled, 0);
+								entityplayer.inventory.mainInventory[entityplayer.inventory.currentItem] = filled;
 							}
 						}
+						tank.drain(ForgeDirection.UNKNOWN, liquid.amount, true);
 						return true;
 					}
 				}
@@ -214,7 +217,7 @@ public class BlockCertusTank extends BlockEC {
 
 	@Override
 	public void onNeighborBlockChange(World world, int x, int y, int z,
-			Block neighborBlock) {
+									  Block neighborBlock) {
 		if (!world.isRemote) {
 
 			ChannelHandler.sendPacketToAllPlayers(world.getTileEntity(x, y, z).getDescriptionPacket(), world);
