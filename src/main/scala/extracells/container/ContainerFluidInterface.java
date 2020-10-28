@@ -71,14 +71,6 @@ public class ContainerFluidInterface extends Container implements
 		return fluid.getID();
 	}
 
-	private String getFluidName(ForgeDirection side) {
-		Fluid fluid = this.fluidInterface.getFilter(side);
-		if (fluid == null) {
-			return "";
-		}
-		return fluid.getName();
-	}
-
 	@Override
 	public void onContainerClosed(EntityPlayer player) {
 		super.onContainerClosed(player);
@@ -147,14 +139,27 @@ public class ContainerFluidInterface extends Container implements
 
 	@Override
 	public void updateContainer() {
-		FluidStack[] fluidStacks = new FluidStack[6];
-		String[] fluidNames = new String[6];
-		for (int i = 0; i < 6; i++) {
-			ForgeDirection location = ForgeDirection.getOrientation(i);
-			fluidStacks[i] = fluidInterface.getFluidTank(location).getFluid();
-			fluidNames[i] = getFluidName(location);
-		}
-		new PacketFluidInterface(fluidStacks, fluidNames, this.player).sendPacketToPlayer(this.player);
+		new PacketFluidInterface(new FluidStack[] {
+				this.fluidInterface.getFluidTank(
+						ForgeDirection.getOrientation(0)).getFluid(),
+				this.fluidInterface.getFluidTank(
+						ForgeDirection.getOrientation(1)).getFluid(),
+				this.fluidInterface.getFluidTank(
+						ForgeDirection.getOrientation(2)).getFluid(),
+				this.fluidInterface.getFluidTank(
+						ForgeDirection.getOrientation(3)).getFluid(),
+				this.fluidInterface.getFluidTank(
+						ForgeDirection.getOrientation(4)).getFluid(),
+				this.fluidInterface.getFluidTank(
+						ForgeDirection.getOrientation(5)).getFluid() },
+				new Integer[] { getFluidID(ForgeDirection.getOrientation(0)),
+						getFluidID(ForgeDirection.getOrientation(1)),
+						getFluidID(ForgeDirection.getOrientation(2)),
+						getFluidID(ForgeDirection.getOrientation(3)),
+						getFluidID(ForgeDirection.getOrientation(4)),
+						getFluidID(ForgeDirection.getOrientation(5)) },
+				this.player).sendPacketToPlayer(this.player);
+
 	}
 
 }

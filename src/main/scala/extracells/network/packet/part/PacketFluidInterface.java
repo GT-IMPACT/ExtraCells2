@@ -17,13 +17,13 @@ import net.minecraftforge.fluids.FluidStack;
 public class PacketFluidInterface extends AbstractPacket {
 
 	FluidStack[] tank;
-	String[] filter;
+	Integer[] filter;
 	int fluidID;
 	int filterSlot;
 
 	public PacketFluidInterface() {}
 
-	public PacketFluidInterface(FluidStack[] _tank, String[] _filter,
+	public PacketFluidInterface(FluidStack[] _tank, Integer[] _filter,
 			EntityPlayer _player) {
 		super(_player);
 		this.mode = 0;
@@ -73,11 +73,10 @@ public class PacketFluidInterface extends AbstractPacket {
 					container.fluidInterface.setFluidTank(
 							ForgeDirection.getOrientation(i), this.tank[i]);
 				}
-				for (int i = 0; i < filter.length; i++) {
-					if (gui.filter[i] != null) {
+				for (int i = 0; i < this.filter.length; i++) {
+					if (gui.filter[i] != null)
 						gui.filter[i].setFluid(FluidRegistry
-								.getFluid(filter[i]));
-					}
+								.getFluid(this.filter[i]));
 				}
 			}
 		}
@@ -96,13 +95,12 @@ public class PacketFluidInterface extends AbstractPacket {
 				else
 					this.tank[i] = null;
 			}
-			this.filter = new String[tag.getInteger("lengthFilter")];
+			this.filter = new Integer[tag.getInteger("lengthFilter")];
 			for (int i = 0; i < this.filter.length; i++) {
-				if (tag.hasKey("filter#" + i)) {
-					this.filter[i] = tag.getString("filter#" + i);
-				} else {
-					this.filter[i] = "";
-				}
+				if (tag.hasKey("filter#" + i))
+					this.filter[i] = tag.getInteger("filter#" + i);
+				else
+					this.filter[i] = -1;
 			}
 			break;
 		case 1:
@@ -129,7 +127,7 @@ public class PacketFluidInterface extends AbstractPacket {
 			tag.setInteger("lengthFilter", this.filter.length);
 			for (int i = 0; i < this.filter.length; i++) {
 				if (this.filter[i] != null) {
-					tag.setString("filter#" + i, this.filter[i]);
+					tag.setInteger("filter#" + i, this.filter[i]);
 				}
 			}
 			ByteBufUtils.writeTag(out, tag);
