@@ -202,7 +202,7 @@ public class TileEntityFluidInterface extends TileBase implements
 		this.inventory = new FluidInterfaceInventory();
 		this.gridBlock = new ECFluidGridBlock(this);
 		for (int i = 0; i < this.tanks.length; i++) {
-			this.tanks[i] = new FluidTank(10000) {
+			this.tanks[i] = new FluidTank(64000) {
 				@Override
 				public FluidTank readFromNBT(NBTTagCompound nbt) {
 					if (!nbt.hasKey("Empty")) {
@@ -424,7 +424,7 @@ public class TileEntityFluidInterface extends TileBase implements
 				+ side.ordinal()));
 		FluidTank[] tanks = new FluidTank[6];
 		for (int i = 0; i < tanks.length; i++) {
-			tanks[i] = new FluidTank(10000) {
+			tanks[i] = new FluidTank(64000) {
 				@Override
 				public FluidTank readFromNBT(NBTTagCompound nbt) {
 					if (!nbt.hasKey("Empty")) {
@@ -452,14 +452,14 @@ public class TileEntityFluidInterface extends TileBase implements
 					.translateToLocal("extracells.tooltip.empty1"));
 			list.add(StatCollector
 					.translateToLocal("extracells.tooltip.amount")
-					+ ": 0mB / 10000mB");
+					+ ": 0L / 64000L");
 		} else {
 			list.add(StatCollector.translateToLocal("extracells.tooltip.fluid")
 					+ ": " + tank.getFluid().getLocalizedName());
 			list.add(StatCollector
 					.translateToLocal("extracells.tooltip.amount")
 					+ ": "
-					+ tank.getFluidAmount() + "mB / 10000mB");
+					+ tank.getFluidAmount() + "L / 64000L");
 		}
 		return list;
 	}
@@ -866,7 +866,7 @@ public class TileEntityFluidInterface extends TileBase implements
 			if (this.tanks[i].getFluid() != null
 					&& FluidRegistry.getFluid(this.fluidFilter[i]) != this.tanks[i]
 					.getFluid().getFluid()) {
-				FluidStack s = this.tanks[i].drain(125, false);
+				FluidStack s = this.tanks[i].drain(12500, false);
 				if (s != null) {
 					IAEFluidStack notAdded = storage.getFluidInventory()
 							.injectItems(
@@ -910,7 +910,7 @@ public class TileEntityFluidInterface extends TileBase implements
 												new FluidStack(
 														FluidRegistry
 																.getFluid(this.fluidFilter[i]),
-														125)),
+														12500)),
 								Actionable.SIMULATE, new MachineSource(this));
 				if (extracted == null)
 					continue;

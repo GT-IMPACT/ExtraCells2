@@ -140,15 +140,15 @@ public abstract class PartFluidIO extends PartECBase implements IGridTickable,
 	@Override
 	public List<String> getWailaBodey(NBTTagCompound tag, List<String> oldList) {
 		if (tag.hasKey("speed"))
-			oldList.add(tag.getInteger("speed") + "mB/t");
+			oldList.add(tag.getInteger("speed") + "L/t");
 		else
-			oldList.add("125mB/t");
+			oldList.add("12500 L/t");
 		return oldList;
 	}
 
 	@Override
 	public NBTTagCompound getWailaTag(NBTTagCompound tag) {
-		tag.setInteger("speed", 125 + this.speedState * 125);
+		tag.setInteger("speed", 12500 + this.speedState * 12500);
 		return tag;
 	}
 
@@ -261,7 +261,7 @@ public abstract class PartFluidIO extends PartECBase implements IGridTickable,
 	public final TickRateModulation tickingRequest(IGridNode node,
 			int TicksSinceLastCall) {
 		if (canDoWork())
-			return doWork(125 + this.speedState * 125, TicksSinceLastCall) ? TickRateModulation.FASTER
+			return doWork(12500 + this.speedState * 12500, TicksSinceLastCall) ? TickRateModulation.FASTER
 					: TickRateModulation.SLOWER;
 		return TickRateModulation.SLOWER;
 	}

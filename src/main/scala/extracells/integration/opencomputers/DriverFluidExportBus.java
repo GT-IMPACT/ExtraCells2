@@ -159,7 +159,7 @@ public class DriverFluidExportBus implements SidedBlock{
 				return new Object[]{false, "no export bus"};
 			if (part.getFacingTank() == null)
 				return new Object[]{false, "no tank"};
-			int amount = Math.min(args.optInteger(1, 625), 125 + part.getSpeedState() * 125);
+			int amount = Math.min(args.optInteger(1, 62500), 12500 + part.getSpeedState() * 12500);
 			boolean didSomething = part.doWork(amount, 1);
 			if (didSomething)
 				context.pause(0.25);
