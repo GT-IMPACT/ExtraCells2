@@ -207,7 +207,7 @@ public class PartFluidInterface extends PartECBase implements IFluidHandler,
 	private IAEItemStack toExport = null;
 
 	private final Item encodedPattern = AEApi.instance().definitions().items().encodedPattern().maybeItem().orNull();
-	private FluidTank tank = new FluidTank(64000) {
+	private FluidTank tank = new FluidTank(1000) {
 		@Override
 		public FluidTank readFromNBT(NBTTagCompound nbt) {
 			if (!nbt.hasKey("Empty")) {
@@ -442,14 +442,14 @@ public class PartFluidInterface extends PartECBase implements IFluidHandler,
 							.translateToLocal("extracells.tooltip.empty1"));
 			list.add(StatCollector
 					.translateToLocal("extracells.tooltip.amount")
-					+ ": 0L / 64000L");
+					+ ": 0L / 1000L");
 		} else {
 			list.add(StatCollector.translateToLocal("extracells.tooltip.fluid")
 					+ ": " + fluid.getLocalizedName());
 			list.add(StatCollector
 					.translateToLocal("extracells.tooltip.amount")
 					+ ": "
-					+ fluid.amount + "L / 64000L");
+					+ fluid.amount + "L / 1000L");
 		}
 		return list;
 	}
