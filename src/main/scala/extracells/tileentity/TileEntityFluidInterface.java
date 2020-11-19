@@ -202,7 +202,7 @@ public class TileEntityFluidInterface extends TileBase implements
 		this.inventory = new FluidInterfaceInventory();
 		this.gridBlock = new ECFluidGridBlock(this);
 		for (int i = 0; i < this.tanks.length; i++) {
-			this.tanks[i] = new FluidTank(64000) {
+			this.tanks[i] = new FluidTank(1000) {
 				@Override
 				public FluidTank readFromNBT(NBTTagCompound nbt) {
 					if (!nbt.hasKey("Empty")) {
@@ -424,7 +424,7 @@ public class TileEntityFluidInterface extends TileBase implements
 				+ side.ordinal()));
 		FluidTank[] tanks = new FluidTank[6];
 		for (int i = 0; i < tanks.length; i++) {
-			tanks[i] = new FluidTank(64000) {
+			tanks[i] = new FluidTank(1000) {
 				@Override
 				public FluidTank readFromNBT(NBTTagCompound nbt) {
 					if (!nbt.hasKey("Empty")) {
@@ -452,14 +452,14 @@ public class TileEntityFluidInterface extends TileBase implements
 					.translateToLocal("extracells.tooltip.empty1"));
 			list.add(StatCollector
 					.translateToLocal("extracells.tooltip.amount")
-					+ ": 0L / 64000L");
+					+ ": 0L / 1000L");
 		} else {
 			list.add(StatCollector.translateToLocal("extracells.tooltip.fluid")
 					+ ": " + tank.getFluid().getLocalizedName());
 			list.add(StatCollector
 					.translateToLocal("extracells.tooltip.amount")
 					+ ": "
-					+ tank.getFluidAmount() + "L / 64000L");
+					+ tank.getFluidAmount() + "L / 1000L");
 		}
 		return list;
 	}
