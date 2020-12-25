@@ -6,12 +6,12 @@ import extracells.part.PartOreDictExporter;
 import extracells.registries.ItemEnum;
 import extracells.registries.PartEnum;
 import li.cil.oc.api.Network;
-import li.cil.oc.api.driver.EnvironmentProvider;
+import li.cil.oc.api.driver.EnvironmentAware;
 import li.cil.oc.api.driver.NamedBlock;
-import li.cil.oc.api.driver.SidedBlock;
 import li.cil.oc.api.machine.Arguments;
 import li.cil.oc.api.machine.Callback;
 import li.cil.oc.api.machine.Context;
+import li.cil.oc.api.network.Environment;
 import li.cil.oc.api.network.Visibility;
 import li.cil.oc.api.prefab.ManagedEnvironment;
 import net.minecraft.item.ItemStack;
@@ -19,30 +19,30 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
-public class DriverOreDictExportBus implements SidedBlock{
+public class DriverOreDictExportBus implements li.cil.oc.api.driver.Block, EnvironmentAware{
 
 	@Override
-	public boolean worksWith(World world, int x, int y, int z, ForgeDirection side) {
-		return getExportBus(world, x, y, z, side) != null;
+	public boolean worksWith(World world, int x, int y, int z) {
+		return getExportBus(world, x, y, z, ForgeDirection.UNKNOWN) != null;
 	}
 
 	@Override
-	public ManagedEnvironment createEnvironment(World world, int x, int y, int z, ForgeDirection side) {
+	public ManagedEnvironment createEnvironment(World world, int x, int y, int z) {
 		TileEntity tile = world.getTileEntity(x, y, z);
-		if (!(tile instanceof IPartHost))
+		if (tile == null || (!(tile instanceof IPartHost)))
 			return null;
-		return new Environment((IPartHost) tile);
+		return new Enviroment((IPartHost) tile);
 	}
 
 	private static PartOreDictExporter getExportBus(World world, int x, int y, int z, ForgeDirection dir){
 		TileEntity tile = world.getTileEntity(x, y, z);
-		if ((!(tile instanceof IPartHost)))
+		if (tile == null || (!(tile instanceof IPartHost)))
 			return null;
 		IPartHost host = (IPartHost) tile;
 		if(dir == null || dir == ForgeDirection.UNKNOWN){
 			for (ForgeDirection side: ForgeDirection.VALID_DIRECTIONS){
 				IPart part = host.getPart(side);
-				if (part instanceof PartOreDictExporter)
+				if (part != null && part instanceof PartOreDictExporter)
 					return (PartOreDictExporter) part;
 			}
 			return null;
@@ -52,12 +52,12 @@ public class DriverOreDictExportBus implements SidedBlock{
 		}
 	}
 
-	public static class Environment extends ManagedEnvironment implements NamedBlock{
+	public class Enviroment extends ManagedEnvironment implements NamedBlock{
 
 		protected final TileEntity tile;
 		protected final IPartHost host;
 
-		Environment(IPartHost host){
+		public Enviroment(IPartHost host){
 			tile = (TileEntity) host;
 			this.host = host;
 			setNode(Network.newNode(this, Visibility.Network).
@@ -102,13 +102,13 @@ public class DriverOreDictExportBus implements SidedBlock{
 
 	}
 
-	static class Provider implements EnvironmentProvider {
-		@Override
-		public Class<? extends li.cil.oc.api.network.Environment> getEnvironment(ItemStack stack){
-			if (stack.getItem() == ItemEnum.PARTITEM.getItem() && stack.getItemDamage() == PartEnum.OREDICTEXPORTBUS.ordinal())
-				return Environment.class;
+	@Override
+	public Class<? extends Environment> providedEnvironment(ItemStack stack) {
+		if(stack == null)
 			return null;
-		}
+		if(stack.getItem() == ItemEnum.PARTITEM.getItem() && stack.getItemDamage() == PartEnum.OREDICTEXPORTBUS.ordinal())
+			return Enviroment.class;
+		return null;
 	}
 
 }

@@ -8,9 +8,8 @@ import extracells.registries.ItemEnum;
 import extracells.registries.PartEnum;
 import extracells.util.FluidUtil;
 import li.cil.oc.api.Network;
-import li.cil.oc.api.driver.EnvironmentProvider;
+import li.cil.oc.api.driver.EnvironmentAware;
 import li.cil.oc.api.driver.NamedBlock;
-import li.cil.oc.api.driver.SidedBlock;
 import li.cil.oc.api.internal.Database;
 import li.cil.oc.api.machine.Arguments;
 import li.cil.oc.api.machine.Callback;
@@ -27,15 +26,15 @@ import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 
-public class DriverFluidImportBus implements SidedBlock {
+public class DriverFluidImportBus implements li.cil.oc.api.driver.Block, EnvironmentAware{
 
 	@Override
-	public boolean worksWith(World world, int x, int y, int z, ForgeDirection side) {
-		return getImportBus(world, x, y, z, side) != null;
+	public boolean worksWith(World world, int x, int y, int z) {
+		return getImportBus(world, x, y, z, ForgeDirection.UNKNOWN) != null;
 	}
 
 	@Override
-	public ManagedEnvironment createEnvironment(World world, int x, int y, int z, ForgeDirection side) {
+	public ManagedEnvironment createEnvironment(World world, int x, int y, int z) {
 		TileEntity tile = world.getTileEntity(x, y, z);
 		if (tile == null || (!(tile instanceof IPartHost)))
 			return null;
@@ -65,7 +64,7 @@ public class DriverFluidImportBus implements SidedBlock {
 		protected final TileEntity tile;
 		protected final IPartHost host;
 
-		Enviroment(IPartHost host){
+		public Enviroment(IPartHost host){
 			tile = (TileEntity) host;
 			this.host = host;
 			setNode(Network.newNode(this, Visibility.Network).
@@ -128,6 +127,7 @@ public class DriverFluidImportBus implements SidedBlock {
 				throw new IllegalArgumentException("no such component");
 			if (!(node instanceof Component))
 				throw new IllegalArgumentException("no such component");
+			Component component = (Component) node;
 			Environment env = node.host();
 			if (!(env instanceof Database))
 				throw new IllegalArgumentException("not a database");
@@ -150,23 +150,6 @@ public class DriverFluidImportBus implements SidedBlock {
 			}
 		}
 
-		/*@Callback(doc = "function(side:number, amount:number):boolean -- Make the fluid export bus facing the specified direction perform a single export operation.")
-		public Object[] exportFluid(Context context, Arguments args){
-			ForgeDirection dir = ForgeDirection.getOrientation(args.checkInteger(0));
-			if (dir == null || dir == ForgeDirection.UNKNOWN)
-				return new Object[]{false, "unknown side"};
-			PartFluidImport part = getImportBus(tile.getWorldObj(), tile.xCoord, tile.yCoord, tile.zCoord, dir);
-			if (part == null)
-				return new Object[]{false, "no export bus"};
-			if (part.getFacingTank() == null)
-				return new Object[]{false, "no tank"};
-			int amount = Math.min(args.optInteger(1, 625), 125 + part.getSpeedState() * 125);
-			boolean didSomething = part.doWork(amount, 1);
-			if (didSomething)
-				context.pause(0.25);
-			return new Object[]{didSomething};
-		}*/
-
 		@Override
 		public String preferredName() {
 			return "me_importbus";
@@ -179,14 +162,13 @@ public class DriverFluidImportBus implements SidedBlock {
 
 	}
 
-	static class Provider implements EnvironmentProvider {
-		@Override
-		public Class<? extends Environment> getEnvironment(ItemStack stack) {
-			if(stack == null)
-				return null;
-			if(stack.getItem() == ItemEnum.PARTITEM.getItem() && stack.getItemDamage() == PartEnum.FLUIDEXPORT.ordinal())
-				return Enviroment.class;
+	@Override
+	public Class<? extends Environment> providedEnvironment(ItemStack stack) {
+		if(stack == null)
 			return null;
-		}
+		if(stack.getItem() == ItemEnum.PARTITEM.getItem() && stack.getItemDamage() == PartEnum.FLUIDEXPORT.ordinal())
+			return Enviroment.class;
+		return null;
 	}
+
 }

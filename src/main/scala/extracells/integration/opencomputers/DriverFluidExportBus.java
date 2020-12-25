@@ -8,13 +8,13 @@ import extracells.registries.ItemEnum;
 import extracells.registries.PartEnum;
 import extracells.util.FluidUtil;
 import li.cil.oc.api.Network;
-import li.cil.oc.api.driver.EnvironmentProvider;
+import li.cil.oc.api.driver.EnvironmentAware;
 import li.cil.oc.api.driver.NamedBlock;
-import li.cil.oc.api.driver.SidedBlock;
 import li.cil.oc.api.internal.Database;
 import li.cil.oc.api.machine.Arguments;
 import li.cil.oc.api.machine.Callback;
 import li.cil.oc.api.machine.Context;
+import li.cil.oc.api.network.Environment;
 import li.cil.oc.api.network.Node;
 import li.cil.oc.api.network.Visibility;
 import li.cil.oc.api.prefab.ManagedEnvironment;
@@ -26,19 +26,19 @@ import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 
-public class DriverFluidExportBus implements SidedBlock{
+public class DriverFluidExportBus implements li.cil.oc.api.driver.Block, EnvironmentAware{
 
 	@Override
-	public boolean worksWith(World world, int x, int y, int z, ForgeDirection side) {
-		return getExportBus(world, x, y, z, side) != null;
+	public boolean worksWith(World world, int x, int y, int z) {
+		return getExportBus(world, x, y, z, ForgeDirection.UNKNOWN) != null;
 	}
 
 	@Override
-	public ManagedEnvironment createEnvironment(World world, int x, int y, int z, ForgeDirection side) {
+	public ManagedEnvironment createEnvironment(World world, int x, int y, int z) {
 		TileEntity tile = world.getTileEntity(x, y, z);
 		if (tile == null || (!(tile instanceof IPartHost)))
 			return null;
-		return new Environment((IPartHost) tile);
+		return new Enviroment((IPartHost) tile);
 	}
 
 	private static PartFluidExport getExportBus(World world, int x, int y, int z, ForgeDirection dir){
@@ -59,12 +59,12 @@ public class DriverFluidExportBus implements SidedBlock{
 		}
 	}
 
-	public class Environment extends ManagedEnvironment implements NamedBlock{
+	public class Enviroment extends ManagedEnvironment implements NamedBlock{
 
 		protected final TileEntity tile;
 		protected final IPartHost host;
 
-		Environment(IPartHost host){
+		public Enviroment(IPartHost host){
 			tile = (TileEntity) host;
 			this.host = host;
 			setNode(Network.newNode(this, Visibility.Network).
@@ -127,7 +127,8 @@ public class DriverFluidExportBus implements SidedBlock{
 				throw new IllegalArgumentException("no such component");
 			if (!(node instanceof Component))
 				throw new IllegalArgumentException("no such component");
-			li.cil.oc.api.network.Environment env = node.host();
+			Component component = (Component) node;
+			Environment env = node.host();
 			if (!(env instanceof Database))
 				throw new IllegalArgumentException("not a database");
 			Database database = (Database) env;
@@ -159,7 +160,7 @@ public class DriverFluidExportBus implements SidedBlock{
 				return new Object[]{false, "no export bus"};
 			if (part.getFacingTank() == null)
 				return new Object[]{false, "no tank"};
-			int amount = Math.min(args.optInteger(1, 62500), 12500 + part.getSpeedState() * 12500);
+			int amount = Math.min(args.optInteger(1, 62500), 1250 + part.getSpeedState() * 1250);
 			boolean didSomething = part.doWork(amount, 1);
 			if (didSomething)
 				context.pause(0.25);
@@ -177,15 +178,14 @@ public class DriverFluidExportBus implements SidedBlock{
 		}
 
 	}
-	static class Provider implements EnvironmentProvider {
-		@Override
-		public Class<? extends li.cil.oc.api.network.Environment> getEnvironment(ItemStack stack) {
-			if (stack == null)
-				return null;
-			if (stack.getItem() == ItemEnum.PARTITEM.getItem() && stack.getItemDamage() == PartEnum.FLUIDEXPORT.ordinal())
-				return Environment.class;
+
+	@Override
+	public Class<? extends Environment> providedEnvironment(ItemStack stack) {
+		if(stack == null)
 			return null;
-		}
+		if(stack.getItem() == ItemEnum.PARTITEM.getItem() && stack.getItemDamage() == PartEnum.FLUIDEXPORT.ordinal())
+			return Enviroment.class;
+		return null;
 	}
 
 }

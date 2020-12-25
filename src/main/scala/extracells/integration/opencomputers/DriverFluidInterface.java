@@ -10,13 +10,13 @@ import extracells.registries.PartEnum;
 import extracells.tileentity.TileEntityFluidInterface;
 import extracells.util.FluidUtil;
 import li.cil.oc.api.Network;
-import li.cil.oc.api.driver.EnvironmentProvider;
+import li.cil.oc.api.driver.EnvironmentAware;
 import li.cil.oc.api.driver.NamedBlock;
-import li.cil.oc.api.driver.SidedBlock;
 import li.cil.oc.api.internal.Database;
 import li.cil.oc.api.machine.Arguments;
 import li.cil.oc.api.machine.Callback;
 import li.cil.oc.api.machine.Context;
+import li.cil.oc.api.network.Environment;
 import li.cil.oc.api.network.Node;
 import li.cil.oc.api.network.Visibility;
 import li.cil.oc.api.prefab.ManagedEnvironment;
@@ -29,20 +29,22 @@ import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 
-public class DriverFluidInterface implements SidedBlock{
+public class DriverFluidInterface implements li.cil.oc.api.driver.Block, EnvironmentAware{
 
 	@Override
-	public boolean worksWith(World world, int x, int y, int z, ForgeDirection side) {
+	public boolean worksWith(World world, int x, int y, int z) {
 		TileEntity tile = world.getTileEntity(x, y, z);
-		return tile != null && (getFluidInterface(world, x, y, z, side) != null || tile instanceof IFluidInterface);
+		if (tile == null)
+			return false;
+		return getFluidInterface(world, x, y, z, ForgeDirection.UNKNOWN) != null || tile instanceof IFluidInterface;
 	}
 
 	@Override
-	public ManagedEnvironment createEnvironment(World world, int x, int y, int z, ForgeDirection side) {
+	public ManagedEnvironment createEnvironment(World world, int x, int y, int z) {
 		TileEntity tile = world.getTileEntity(x, y, z);
 		if (tile == null || (!(tile instanceof IPartHost || tile instanceof IFluidInterface)))
 			return null;
-		return new Environment(tile);
+		return new Enviroment(tile);
 	}
 
 	private static PartFluidInterface getFluidInterface(World world, int x, int y, int z, ForgeDirection dir){
@@ -63,12 +65,12 @@ public class DriverFluidInterface implements SidedBlock{
 		}
 	}
 
-	public class Environment extends ManagedEnvironment implements NamedBlock{
+	public class Enviroment extends ManagedEnvironment implements NamedBlock{
 
 		protected final TileEntity tile;
 		protected final IPartHost host;
 
-		Environment(TileEntity tile){
+		public Enviroment(TileEntity tile){
 			this.tile =  tile;
 			this.host = tile instanceof IPartHost ? (IPartHost) tile : null;
 			setNode(Network.newNode(this, Visibility.Network).
@@ -122,7 +124,7 @@ public class DriverFluidInterface implements SidedBlock{
 			if (!(node instanceof Component))
 				throw new IllegalArgumentException("no such component");
 			Component component = (Component) node;
-			li.cil.oc.api.network.Environment env = node.host();
+			Environment env = node.host();
 			if (!(env instanceof Database))
 				throw new IllegalArgumentException("not a database");
 			Database database = (Database) env;
@@ -155,16 +157,15 @@ public class DriverFluidInterface implements SidedBlock{
 
 	}
 
-	static class Provider implements EnvironmentProvider {
-		@Override
-		public Class<? extends li.cil.oc.api.network.Environment> getEnvironment(ItemStack stack) {
-			if (stack == null)
-				return null;
-			if (stack.getItem() == ItemEnum.PARTITEM.getItem() && stack.getItemDamage() == PartEnum.INTERFACE.ordinal())
-				return Environment.class;
-			if (stack.getItem() == Item.getItemFromBlock(BlockEnum.ECBASEBLOCK.getBlock()) && stack.getItemDamage() == 0)
-				return Environment.class;
+	@Override
+	public Class<? extends Environment> providedEnvironment(ItemStack stack) {
+		if(stack == null)
 			return null;
-		}
+		if(stack.getItem() == ItemEnum.PARTITEM.getItem() && stack.getItemDamage() == PartEnum.INTERFACE.ordinal())
+			return Enviroment.class;
+		if(stack.getItem() == Item.getItemFromBlock(BlockEnum.ECBASEBLOCK.getBlock()) && stack.getItemDamage() == 0)
+			return Enviroment.class;
+		return null;
 	}
+
 }
