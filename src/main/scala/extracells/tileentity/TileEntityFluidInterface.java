@@ -931,6 +931,7 @@ public class TileEntityFluidInterface extends TileBase implements
 
 	private NBTTagCompound writeOutputToNBT(NBTTagCompound tag) {
 		int i = 0;
+		i = 0;
 		for (IAEStack s : this.addToExport) {
 			if (s != null) {
 				tag.setBoolean("add-" + i + "-isItem", s.isItem());
@@ -939,7 +940,7 @@ public class TileEntityFluidInterface extends TileBase implements
 					((IAEItemStack) s).getItemStack().writeToNBT(data);
 				} else {
 					((IAEFluidStack) s).getFluidStack().writeToNBT(data);
-				}
+				};
 				tag.setTag("add-" + i, data);
 				tag.setLong("add-" + i + "-amount", s.getStackSize());
 			}
