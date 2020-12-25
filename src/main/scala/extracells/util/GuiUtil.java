@@ -1,19 +1,10 @@
 package extracells.util;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import extracells.gui.widget.fluid.WidgetFluidSlot;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.Container;
 import net.minecraft.util.IIcon;
 import org.lwjgl.opengl.GL11;
-
-import javax.annotation.Nullable;
 
 public class GuiUtil {
 
@@ -85,45 +76,5 @@ public class GuiUtil {
 			return true;
 		}
 		return false;
-	}
-
-	@Nullable
-	@SideOnly(Side.CLIENT)
-	public static <G> G getGui(Class<G> guiClass) {
-		GuiScreen gui = Minecraft.getMinecraft().currentScreen;
-		if (guiClass.isInstance(gui)) {
-			return guiClass.cast(gui);
-		} else {
-			return null;
-		}
-	}
-
-	@Nullable
-	@SideOnly(Side.CLIENT)
-	public static GuiScreen getGui() {
-		return Minecraft.getMinecraft().currentScreen;
-	}
-
-	@Nullable
-	public static <C> C getContainer(EntityPlayer player, Class<C> containerClass) {
-		Container container = player.openContainer;
-		if (containerClass.isInstance(container)) {
-			return containerClass.cast(container);
-		} else {
-			return null;
-		}
-	}
-
-	@Nullable
-	public static <C> C getContainer(@Nullable GuiContainer gui, Class<C> containerClass) {
-		if (gui == null) {
-			return null;
-		}
-		Container container = gui.inventorySlots;
-		if (containerClass.isInstance(container)) {
-			return containerClass.cast(container);
-		} else {
-			return null;
-		}
 	}
 }

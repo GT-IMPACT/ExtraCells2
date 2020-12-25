@@ -175,7 +175,7 @@ public class TileEntityFluidInterface extends TileBase implements
 	private ECFluidGridBlock gridBlock;
 	private IGridNode node = null;
 	public FluidTank[] tanks = new FluidTank[6];
-	public String[] fluidFilter = new String[this.tanks.length];
+	public Integer[] fluidFilter = new Integer[this.tanks.length];
 	public boolean doNextUpdate = false;
 	private boolean wasIdle = false;
 	private int tickCount = 0;
@@ -215,7 +215,7 @@ public class TileEntityFluidInterface extends TileBase implements
 					return this;
 				}
 			};
-			this.fluidFilter[i] = "";
+			this.fluidFilter[i] = -1;
 		}
 	}
 
@@ -726,9 +726,8 @@ public class TileEntityFluidInterface extends TileBase implements
 
 	public void readFilter(NBTTagCompound tag) {
 		for (int i = 0; i < this.fluidFilter.length; i++) {
-			if (tag.hasKey("fluid#" + i)) {
-				this.fluidFilter[i] = tag.getString("fluid#" + i);
-			}
+			if (tag.hasKey("fluid#" + i))
+				this.fluidFilter[i] = tag.getInteger("fluid#" + i);
 		}
 	}
 
@@ -739,7 +738,7 @@ public class TileEntityFluidInterface extends TileBase implements
 			if (tag.hasKey("tank#" + i))
 				this.tanks[i].readFromNBT(tag.getCompoundTag("tank#" + i));
 			if (tag.hasKey("filter#" + i))
-				this.fluidFilter[i] = tag.getString("filter#" + i);
+				this.fluidFilter[i] = tag.getInteger("filter#" + i);
 		}
 		if (hasWorldObj()) {
 			IGridNode node = getGridNode(ForgeDirection.UNKNOWN);
@@ -821,11 +820,11 @@ public class TileEntityFluidInterface extends TileBase implements
 		if (side == null || side == ForgeDirection.UNKNOWN)
 			return;
 		if (fluid == null) {
-			this.fluidFilter[side.ordinal()] = "";
+			this.fluidFilter[side.ordinal()] = -1;
 			this.doNextUpdate = true;
 			return;
 		}
-		this.fluidFilter[side.ordinal()] = fluid.getName();
+		this.fluidFilter[side.ordinal()] = fluid.getID();
 		this.doNextUpdate = true;
 	}
 
@@ -859,43 +858,80 @@ public class TileEntityFluidInterface extends TileBase implements
 		if (storage == null)
 			return;
 		if (this.toExport != null) {
-			storage.getItemInventory().injectItems(this.toExport, Actionable.MODULATE, new MachineSource(this));
+			storage.getItemInventory().injectItems(this.toExport,
+					Actionable.MODULATE, new MachineSource(this));
 			this.toExport = null;
 		}
 		for (int i = 0; i < this.tanks.length; i++) {
-			FluidTank tank = tanks[i];
-			FluidStack containedFluid = tank.getFluid();
-			String fluidFilter = this.fluidFilter[i];
-			if (containedFluid != null && FluidRegistry.getFluid(fluidFilter) != containedFluid.getFluid()) {
-				FluidStack fluidStack = tank.drain(12500, false);
-				if (fluidStack != null) {
-					IAEFluidStack notAdded = storage.getFluidInventory().injectItems(AEApi.instance().storage().createFluidStack(fluidStack.copy()), Actionable.SIMULATE, new MachineSource(this));
+			if (this.tanks[i].getFluid() != null
+					&& FluidRegistry.getFluid(this.fluidFilter[i]) != this.tanks[i]
+					.getFluid().getFluid()) {
+				FluidStack s = this.tanks[i].drain(12500, false);
+				if (s != null) {
+					IAEFluidStack notAdded = storage.getFluidInventory()
+							.injectItems(
+									AEApi.instance().storage()
+											.createFluidStack(s.copy()),
+									Actionable.SIMULATE,
+									new MachineSource(this));
 					if (notAdded != null) {
-						int toAdd = (int) (fluidStack.amount - notAdded.getStackSize());
-						if (toAdd == 0) continue;
-						storage.getFluidInventory().injectItems(AEApi.instance().storage().createFluidStack(tank.drain(toAdd, true)), Actionable.MODULATE, new MachineSource(this));
+						int toAdd = (int) (s.amount - notAdded.getStackSize());
+						storage.getFluidInventory().injectItems(
+								AEApi.instance()
+										.storage()
+										.createFluidStack(
+												this.tanks[i]
+														.drain(toAdd, true)),
+								Actionable.MODULATE, new MachineSource(this));
 						this.doNextUpdate = true;
 						this.wasIdle = false;
 					} else {
-						storage.getFluidInventory().injectItems(AEApi.instance().storage().createFluidStack(tank.drain(fluidStack.amount, true)), Actionable.MODULATE, new MachineSource(this));
+						storage.getFluidInventory().injectItems(
+								AEApi.instance()
+										.storage()
+										.createFluidStack(
+												this.tanks[i].drain(s.amount,
+														true)),
+								Actionable.MODULATE, new MachineSource(this));
 						this.doNextUpdate = true;
 						this.wasIdle = false;
 					}
 				}
 			}
-
-			if ((containedFluid == null
-					|| containedFluid.getFluid() == FluidRegistry.getFluid(fluidFilter))
-					&& FluidRegistry.getFluid(fluidFilter) != null) {
-				IAEFluidStack extracted = storage.getFluidInventory().extractItems(AEApi.instance().storage().createFluidStack(new FluidStack(FluidRegistry.getFluid(fluidFilter), 12500)), Actionable.SIMULATE, new MachineSource(this));
-				if (extracted == null) {
+			if ((this.tanks[i].getFluid() == null || this.tanks[i].getFluid()
+					.getFluid() == FluidRegistry.getFluid(this.fluidFilter[i]))
+					&& FluidRegistry.getFluid(this.fluidFilter[i]) != null) {
+				IAEFluidStack extracted = storage
+						.getFluidInventory()
+						.extractItems(
+								AEApi.instance()
+										.storage()
+										.createFluidStack(
+												new FluidStack(
+														FluidRegistry
+																.getFluid(this.fluidFilter[i]),
+														12500)),
+								Actionable.SIMULATE, new MachineSource(this));
+				if (extracted == null)
 					continue;
-				}
-				int accepted = tank.fill(extracted.getFluidStack(), false);
-				if (accepted == 0) {
+				int accepted = this.tanks[i].fill(extracted.getFluidStack(),
+						false);
+				if (accepted == 0)
 					continue;
-				}
-				tank.fill(storage.getFluidInventory().extractItems(AEApi.instance().storage().createFluidStack(new FluidStack(FluidRegistry.getFluid(fluidFilter), accepted)), Actionable.MODULATE, new MachineSource(this)).getFluidStack(), true);
+				this.tanks[i]
+						.fill(storage
+								.getFluidInventory()
+								.extractItems(
+										AEApi.instance()
+												.storage()
+												.createFluidStack(
+														new FluidStack(
+																FluidRegistry
+																		.getFluid(this.fluidFilter[i]),
+																accepted)),
+										Actionable.MODULATE,
+										new MachineSource(this))
+								.getFluidStack(), true);
 				this.doNextUpdate = true;
 				this.wasIdle = false;
 			}
@@ -924,7 +960,7 @@ public class TileEntityFluidInterface extends TileBase implements
 
 	public NBTTagCompound writeFilter(NBTTagCompound tag) {
 		for (int i = 0; i < this.fluidFilter.length; i++) {
-			tag.setString("fluid#" + i, this.fluidFilter[i]);
+			tag.setInteger("fluid#" + i, this.fluidFilter[i]);
 		}
 		return tag;
 	}
@@ -974,15 +1010,15 @@ public class TileEntityFluidInterface extends TileBase implements
 		data.setTag("export", tag);
 	}
 
-	public NBTTagCompound writeToNBTWithoutExport(NBTTagCompound tag) {
+	public void writeToNBTWithoutExport(NBTTagCompound tag) {
 		super.writeToNBT(tag);
 		for (int i = 0; i < this.tanks.length; i++) {
 			tag.setTag("tank#" + i,
 					this.tanks[i].writeToNBT(new NBTTagCompound()));
-			tag.setString("filter#" + i, this.fluidFilter[i]);
+			tag.setInteger("filter#" + i, this.fluidFilter[i]);
 		}
 		if (!hasWorldObj())
-			return tag;
+			return;
 		IGridNode node = getGridNode(ForgeDirection.UNKNOWN);
 		if (node != null) {
 			NBTTagCompound nodeTag = new NBTTagCompound();
@@ -992,6 +1028,5 @@ public class TileEntityFluidInterface extends TileBase implements
 		NBTTagCompound inventory = new NBTTagCompound();
 		this.inventory.writeToNBT(inventory);
 		tag.setTag("inventory", inventory);
-		return tag;
 	}
 }
