@@ -2,6 +2,7 @@ package extracells.item;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import extracells.registries.PartEnum;
 import extracells.tileentity.TileEntityFluidInterface;
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
@@ -10,10 +11,12 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IIcon;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 
+import java.util.Collections;
 import java.util.List;
 
 public class ItemBlockECBase extends ItemBlock {
@@ -64,6 +67,20 @@ public class ItemBlockECBase extends ItemBlock {
 			return "extracells.block.fluidfiller";
 		default:
 			return super.getUnlocalizedName(stack);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void addInformation(ItemStack is, EntityPlayer p, List l, boolean b) {
+		super.addInformation(is, p, l, b);
+		if (is.getItemDamage() == 0) {
+			String[] tooltip = new String[] {
+					EnumChatFormatting.RED + "Impact authors do not recommend using this device.",
+					EnumChatFormatting.RED + "This device is the source of ME network lags and problems.",
+					EnumChatFormatting.RED + "This item will not be deleted, use at your own risk.",
+			};
+			Collections.addAll(l, tooltip);
 		}
 	}
 

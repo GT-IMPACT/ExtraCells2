@@ -16,10 +16,12 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.Level;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,6 +68,20 @@ public class ItemPartECBase extends Item implements IPartItem, IItemGroup {
 			return ECApi.instance().blocks().blockInterface().maybeItem().get().getItemStackDisplayName(
 							ECApi.instance().blocks().blockInterface().maybeStack(1).get());
 		return super.getItemStackDisplayName(stack);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void addInformation(ItemStack is, EntityPlayer p, List l, boolean b) {
+		super.addInformation(is, p, l, b);
+		if (is.getItemDamage() == PartEnum.INTERFACE.ordinal()) {
+			String[] tooltip = new String[] {
+					EnumChatFormatting.RED + "Impact authors do not recommend using this device.",
+					EnumChatFormatting.RED + "This device is the source of ME network lags and problems.",
+					EnumChatFormatting.RED + "This item will not be deleted, use at your own risk.",
+			};
+			Collections.addAll(l, tooltip);
+		}
 	}
 
 	@Override
