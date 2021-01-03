@@ -183,7 +183,7 @@ public class PartOreDictExporter extends PartECBase implements IGridTickable {
 	}
 
 	public boolean doWork(int rate, int ticksSinceLastCall) {
-		int amount = Math.min(rate * ticksSinceLastCall, 64);
+		int amount = Math.min(rate * ticksSinceLastCall * 2048, 64);
 		IStorageGrid storage = getStorageGrid();
 		assert storage != null;
 		IMEMonitor<IAEItemStack> inv = storage.getItemInventory();
