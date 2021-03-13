@@ -6,6 +6,7 @@ import appeng.api.config.SecurityPermissions;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.events.*;
+import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.parts.IPart;
 import appeng.api.parts.IPartCollisionHelper;
 import appeng.api.parts.IPartRenderHelper;
@@ -16,6 +17,8 @@ import appeng.api.storage.IMEInventoryHandler;
 import appeng.api.storage.StorageChannel;
 import appeng.api.storage.data.IAEFluidStack;
 import appeng.api.util.AEColor;
+import appeng.helpers.IPriorityHost;
+import appeng.me.GridAccessException;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import extracells.container.ContainerBusFluidStorage;
@@ -45,10 +48,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class PartFluidStorage extends PartECBase implements ICellContainer, IInventoryUpdateReceiver, IFluidSlotPartOrBlock {
+public class PartFluidStorage extends PartECBase implements ICellContainer, IInventoryUpdateReceiver, IFluidSlotPartOrBlock, IPriorityHost {
 
 	private HashMap<FluidStack, Integer> fluidList = new HashMap<FluidStack, Integer>();
-	private int priority = 0;
+	public int priority = 0; //todo priority
 	protected HandlerPartStorageFluid handler = new HandlerPartStorageFluid(this);
 	private Fluid[] filterFluids = new Fluid[54]; //total number 54
 	private AccessRestriction access = AccessRestriction.READ_WRITE;
@@ -118,8 +121,15 @@ public class PartFluidStorage extends PartECBase implements ICellContainer, IInv
 	}
 
 	@Override
-	public int getPriority() {
+	public int getPriority() {//todo priority
 		return this.priority;
+	}
+
+	@Override
+	public void setPriority(int priority) {//todo priority
+		this.priority = priority;
+		this.getHost().markForSave(); //save me with new priority
+		this.getHost().markForUpdate(); //upd me with new priority
 	}
 
 	@Override
@@ -175,7 +185,7 @@ public class PartFluidStorage extends PartECBase implements ICellContainer, IInv
 	@Override
 	public void readFromNBT(NBTTagCompound data) {
 		super.readFromNBT(data);
-		this.priority = data.getInteger("priority");
+		this.priority = data.getInteger("priority"); //todo priority
 		for (int i = 0; i < 54; i++) { //total number 54
 			this.filterFluids[i] = FluidRegistry.getFluid(data.getString("FilterFluid#" + i));
 		}
@@ -284,7 +294,7 @@ public class PartFluidStorage extends PartECBase implements ICellContainer, IInv
 	@Override
 	public void writeToNBT(NBTTagCompound data) {
 		super.writeToNBT(data);
-		data.setInteger("priority", this.priority);
+		data.setInteger("priority", this.priority); //todo priority
 		for (int i = 0; i < this.filterFluids.length; i++) {//total number 54
 			Fluid fluid = this.filterFluids[i];
 			if (fluid != null)
