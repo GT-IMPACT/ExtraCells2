@@ -121,6 +121,9 @@ extracells.tooltip.gas=Gas
 extracells.tooltip.essentia=Essentia
 extracells.tooltip.installed=Installed:
 extracells.tooltip.crafting=Crafting
+extracells.tooltip.fluidface.0=Impact authors do not recommend using this device.
+extracells.tooltip.fluidface.1=This device is the source of ME network lags and problems.
+extracells.tooltip.fluidface.2=This item will not be deleted, use at your own risk.
 
 #Buttons
 extracells.gui.craft=Craft

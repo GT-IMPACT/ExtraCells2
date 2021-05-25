@@ -19,6 +19,8 @@ import net.minecraft.world.World;
 import java.util.Collections;
 import java.util.List;
 
+import static net.minecraft.util.StatCollector.translateToLocal;
+
 public class ItemBlockECBase extends ItemBlock {
 
 	public ItemBlockECBase(Block block) {
@@ -76,9 +78,9 @@ public class ItemBlockECBase extends ItemBlock {
 		super.addInformation(is, p, l, b);
 		if (is.getItemDamage() == 0) {
 			String[] tooltip = new String[] {
-					EnumChatFormatting.RED + "Impact authors do not recommend using this device.",
-					EnumChatFormatting.RED + "This device is the source of ME network lags and problems.",
-					EnumChatFormatting.RED + "This item will not be deleted, use at your own risk.",
+					EnumChatFormatting.RED + translateToLocal("extracells.tooltip.fluidface.0"),
+					EnumChatFormatting.RED + translateToLocal("extracells.tooltip.fluidface.1"),
+					EnumChatFormatting.RED + translateToLocal("extracells.tooltip.fluidface.2"),
 			};
 			Collections.addAll(l, tooltip);
 		}

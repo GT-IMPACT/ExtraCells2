@@ -1,8 +1,6 @@
-//**********//
-//EXTRACELLS//
-//**********//
+#EXTRACELLS
 
-//Items
+#Items
 extracells.item.storage.physical.256k.name=МЭ 256Кб хранилище
 extracells.item.storage.physical.1024k.name=МЭ 1024kб хранилище
 extracells.item.storage.physical.4096k.name=МЭ 4096kб хранилище
@@ -32,14 +30,14 @@ extracells.item.storage.casing.fluid.name=Жидкостный корпус хр
 extracells.item.terminal.fluid.wireless.name=Беспроводной МЭ жидкостный терминал
 extracells.item.fluid.pattern=МЭ жидкостный шаблон [WIP]
 
-//Creative Tab
+#Creative Tab
 itemGroup.Extra_Cells=Extra Cells
 
-//Item Groups
+#Item Groups
 extracells.fluid.IO=МЭ жидкостная шина экспорта/импорта
 extracells.fluid.plane=МЭ жидкостная плоскость уничтожения/формирования
 
-//Parts
+#Parts
 extracells.part.fluid.export.name=МЭ жидкостная шина экспорта
 extracells.part.fluid.import.name=МЭ жидкостная шина импорта
 extracells.part.fluid.storage.name=МЭ жидкостная шина хранения
@@ -53,7 +51,7 @@ extracells.part.fluid.conversion.monitor.name=МЭ жидкостный мони
 extracells.part.fluid.monitor.name=МЭ жидкостный монитор хранения
 extracells.part.oredict.export.name=МЭ шина экспорта по словарю руд
 
-//Blocks
+#Blocks
 extracells.block.certustank=Резервуар из истинного кварца
 extracells.block.walrus.name=Морж
 extracells.block.fluidcrafter.name=МЭ жидкостный сборщик
@@ -62,7 +60,7 @@ extracells.block.fluidfiller.name=МЭ жидкостный авто-запол�
 tile.extracells.block.vibrantchamberfluid.name=Жидкостная вибрационная камера
 tile.extracells.block.hardmedrive.name=Взрывоустойчивый МЭ накопитель
 
-//Tooltips and Chat-Messages
+#Tooltips and Chat-Messages
 extracells.tooltip.amount=Количество
 extracells.tooltip.fluid=Жидкость
 extracells.tooltip.storage.physical.types=%s из %s типов предметов использовано.
@@ -84,6 +82,9 @@ extracells.tooltip.storage.container.2=Режим: Равноценный обм
 extracells.tooltip.onlyblocks=Вы не можете размещать предметы! Положите блок в БЛОК-контейнер
 extracells.tooltip.save=Сохранить
 extracells.tooltip.oredict=Имя словаря руд
+extracells.tooltip.fluidface.0=Авторы Impact не рекомендуют использовать это устройство.
+extracells.tooltip.fluidface.1=Это устройство является источником лагов и проблем в сети ME.
+extracells.tooltip.fluidface.2=Это устройство не будет удалено, используйте на свой страх и риск.
 
-//Buttons
+#Buttons
 extracells.gui.craft=Создать
