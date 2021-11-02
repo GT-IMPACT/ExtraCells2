@@ -28,6 +28,7 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +39,7 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
     private EntityPlayer player;
     private int currentScroll = 0;
     private GuiTextField searchbar;
-    private List<AbstractFluidWidget> fluidWidgets = new ArrayList<AbstractFluidWidget>();
+    private List<AbstractFluidWidget> fluidWidgets = new ArrayList<>();
     private ResourceLocation guiTexture = new ResourceLocation("extracells", "textures/gui/terminalfluid.png");
     public IAEFluidStack currentFluid;
     private ContainerFluidTerminal containerTerminalFluid;
@@ -65,27 +66,17 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
 
     @Override
     protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-        this.fontRendererObj.drawString(
-                StatCollector.translateToLocal("extracells.part.fluid.terminal.name").replace("ME ", ""), 9, 6, 0x000000);
+        this.fontRendererObj.drawString(StatCollector.translateToLocal("extracells.part.fluid.terminal.name").replace("ME ", ""), 9, 6, 0x000000);
         drawWidgets(mouseX, mouseY);
         if (this.currentFluid != null) {
             long currentFluidAmount = this.currentFluid.getStackSize();
-            String amountToText = Long.toString(currentFluidAmount) + "L";
-            if (Extracells.shortenedBuckets()) {
-                DecimalFormat df = new DecimalFormat("0.###");
-                if (currentFluidAmount > 1000000000L)
-                    amountToText = df.format(currentFluidAmount / 1000000000f) + "MegaB";
-                else if (currentFluidAmount > 1000000L)
-                    amountToText = df.format(currentFluidAmount / 1000000f) + "KiloB";
-                else if (currentFluidAmount > 9999L) {
-                    amountToText = df.format(currentFluidAmount / 1000f) + "L";
-                }
+            String amountToText = NumberFormat.getInstance().format(currentFluidAmount) + "L";
+            this.fontRendererObj.drawString(amountToText, 45, 91, 0x000000);
+            String str = this.currentFluid.getFluid().getLocalizedName(this.currentFluid.getFluidStack());
+            if (str.length() > 20) {
+                str = str.substring(0, 20) + ".";
             }
-
-            this.fontRendererObj.drawString(
-                    StatCollector.translateToLocal("extracells.tooltip.amount") + ": " + Long.toString(currentFluidAmount) + " L", 45, 91, 0x000000);
-            this.fontRendererObj.drawString(
-                    StatCollector.translateToLocal("extracells.tooltip.fluid") + ": " + this.currentFluid.getFluid().getLocalizedName(this.currentFluid.getFluidStack()), 45, 101, 0x000000);
+            this.fontRendererObj.drawString(str, 45, 101, 0x000000);
         }
     }
 
@@ -109,8 +100,9 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
                 for (int y = 0; y < 4; y++) {
                     int widgetIndex = y * 9 + x + this.currentScroll * 9;
                     if (0 <= widgetIndex && widgetIndex < listSize) {
-                        if (this.fluidWidgets.get(widgetIndex).drawTooltip(x * 18 + 7, y * 18 - 1, mouseX, mouseY))
+                        if (this.fluidWidgets.get(widgetIndex).drawTooltip(x * 18 + 7, y * 18 - 1, mouseX, mouseY)) {
                             break;
+                        }
                     } else {
                         break;
                     }
@@ -124,10 +116,12 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
                 this.currentScroll++;
             }
 
-            if (this.currentScroll < 0)
+            if (this.currentScroll < 0) {
                 this.currentScroll = 0;
-            if (listSize / 9 < 4 && this.currentScroll < listSize / 9 + 4)
+            }
+            if (listSize / 9 < 4 && this.currentScroll < listSize / 9 + 4) {
                 this.currentScroll = 0;
+            }
         }
     }
 
@@ -166,7 +160,7 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
         int yStart = (height - ySize) / 2;
         int x = x2 - xStart;
         int y = y2 - yStart;
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<>();
         if (x >= -17 && x <= -1) {
             if (y >= 5 && y <= 21) {
                 list.add("Sort by");
@@ -190,20 +184,19 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void initGui() {
-        IConfigManager configSrc;
         super.initGui();
         Mouse.getDWheel();
-        GuiTabButton craftingStatusBtn;
         this.buttonList.clear();
-        this.buttonList.add(new GuiImgButton(0, 0, 0, this.guiLeft - 17, this.guiTop +   5, "Total capacity (9..1)"));
-        this.buttonList.add(new GuiImgButton(1, 16, 0, this.guiLeft - 17, this.guiTop +  25, "Total capacity (1..9)"));
-        this.buttonList.add(new GuiImgButton(2, 0, 16, this.guiLeft - 17, this.guiTop +  45, "Name fluids (A..z)"));
-        this.buttonList.add(new GuiImgButton(3, 16, 16, this.guiLeft - 17, this.guiTop +  65, "Name fluids (z..A)"));
+        
+        this.buttonList.add(new GuiImgButton(0, 0, 0, this.guiLeft - 17, this.guiTop + 5, "Total capacity (9..1)"));
+        this.buttonList.add(new GuiImgButton(1, 16, 0, this.guiLeft - 17, this.guiTop + 25, "Total capacity (1..9)"));
+        this.buttonList.add(new GuiImgButton(2, 0, 16, this.guiLeft - 17, this.guiTop + 45, "Name fluids (A..z)"));
+        this.buttonList.add(new GuiImgButton(3, 16, 16, this.guiLeft - 17, this.guiTop + 65, "Name fluids (z..A)"));
 
         updateFluids();
-        this.searchbar = new GuiTextField(this.fontRendererObj,
-                this.guiLeft + 81, this.guiTop + 6, 88, 10) {
+        this.searchbar = new GuiTextField(this.fontRendererObj, this.guiLeft + 81, this.guiTop + 6, 88, 10) {
             @Override
             public void mouseClicked(int x, int y, int mouseBtn) {
                 boolean withinXRange = this.xPosition <= x && x < this.xPosition + this.width;
@@ -212,8 +205,11 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
               
                 if (flag && mouseBtn == 1) this.setText("");
 
-                if (flag) this.setFocused(true);
-                else this.setFocused(false);
+                if (flag) {
+                    this.setFocused(true);
+                } else {
+                    this.setFocused(false);
+                }
             }
         };
         this.searchbar.setEnableBackgroundDrawing(false);
@@ -240,7 +236,6 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
 
     @Override
     protected void keyTyped(char key, int keyID) {
-        int mSearch = 0;
         if (keyID == Keyboard.KEY_ESCAPE) this.mc.thePlayer.closeScreen();
         if (!this.searchbar.isFocused() && keyID == Keyboard.KEY_E ) this.mc.thePlayer.closeScreen();
         if (keyID == Keyboard.KEY_RETURN) this.searchbar.setFocused(false);
@@ -266,10 +261,10 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
     }
 
     public void updateFluids() {
-        this.fluidWidgets = new ArrayList<AbstractFluidWidget>();
+        this.fluidWidgets = new ArrayList<>();
         for (IAEFluidStack fluidStack : this.containerTerminalFluid.getFluidStackList()) {
-            if (fluidStack.getFluid().getLocalizedName(fluidStack.getFluidStack()).toLowerCase().contains(this.searchbar.getText().toLowerCase()) && ECApi.instance().canFluidSeeInTerminal(
-                    fluidStack.getFluid())) {
+            if (fluidStack.getFluid().getLocalizedName(fluidStack.getFluidStack()).toLowerCase().contains(this.searchbar.getText().toLowerCase())
+                    && ECApi.instance().canFluidSeeInTerminal(fluidStack.getFluid())) {
                 this.fluidWidgets.add(new WidgetFluidSelector(this, fluidStack));
             }
         }
@@ -280,8 +275,9 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
     public void updateSelectedFluid() {
         this.currentFluid = null;
         for (IAEFluidStack stack : this.containerTerminalFluid.getFluidStackList()) {
-            if (stack.getFluid() == this.containerTerminalFluid.getSelectedFluid())
+            if (stack.getFluid() == this.containerTerminalFluid.getSelectedFluid()) {
                 this.currentFluid = stack;
+            }
         }
     }
 }

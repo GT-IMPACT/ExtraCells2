@@ -25,19 +25,16 @@ import net.minecraft.inventory.SlotFurnace;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.Fluid;
 
-public class ContainerFluidTerminal extends Container implements
-		IMEMonitorHandlerReceiver<IAEFluidStack>, IFluidSelectorContainer {
+public class ContainerFluidTerminal extends Container implements IMEMonitorHandlerReceiver<IAEFluidStack>, IFluidSelectorContainer {
 
 	private PartFluidTerminal terminal;
 	private IMEMonitor<IAEFluidStack> monitor;
-	private IItemList<IAEFluidStack> fluidStackList = AEApi.instance()
-			.storage().createFluidList();
+	private IItemList<IAEFluidStack> fluidStackList = AEApi.instance().storage().createFluidList();
 	private Fluid selectedFluid;
 	private EntityPlayer player;
 	private GuiFluidTerminal guiFluidTerminal;
 
-	public ContainerFluidTerminal(PartFluidTerminal _terminal,
-			EntityPlayer _player) {
+	public ContainerFluidTerminal(PartFluidTerminal _terminal, EntityPlayer _player) {
 		this.terminal = _terminal;
 		this.player = _player;
 		if (!this.player.worldObj.isRemote) {
@@ -50,19 +47,16 @@ public class ContainerFluidTerminal extends Container implements
 		}
 
 		// Input Slot accepts all FluidContainers
-		addSlotToContainer(new SlotRespective(this.terminal.getInventory(), 0,
-				8, 92));
+		addSlotToContainer(new SlotRespective(this.terminal.getInventory(), 0, 8, 92));
 		// Input Slot accepts nothing
-		addSlotToContainer(new SlotFurnace(this.player,
-				this.terminal.getInventory(), 1, 26, 92));
+		addSlotToContainer(new SlotFurnace(this.player, this.terminal.getInventory(), 1, 26, 92));
 		bindPlayerInventory(this.player.inventory);
 	}
 
 	protected void bindPlayerInventory(InventoryPlayer inventoryPlayer) {
 		for (int i = 0; i < 3; i++) {
 			for (int j = 0; j < 9; j++) {
-				addSlotToContainer(new Slot(inventoryPlayer, j + i * 9 + 9,
-						8 + j * 18, i * 18 + 122));
+				addSlotToContainer(new Slot(inventoryPlayer, j + i * 9 + 9, 8 + j * 18, i * 18 + 122));
 			}
 		}
 
@@ -73,15 +67,15 @@ public class ContainerFluidTerminal extends Container implements
 
 	@Override
 	public boolean canInteractWith(EntityPlayer entityplayer) {
-		if (terminal == null)
+		if (terminal == null) {
 			return false;
+		}
 		return terminal.isValid();
 	}
 
 	public void forceFluidUpdate() {
 		if (this.monitor != null) {
-			new PacketFluidTerminal(this.player, this.monitor.getStorageList())
-					.sendPacketToPlayer(this.player);
+			new PacketFluidTerminal(this.player, this.monitor.getStorageList()).sendPacketToPlayer(this.player);
 		}
 	}
 
@@ -110,8 +104,9 @@ public class ContainerFluidTerminal extends Container implements
 	public void onContainerClosed(EntityPlayer entityPlayer) {
 		super.onContainerClosed(entityPlayer);
 		if (!entityPlayer.worldObj.isRemote) {
-			if (this.monitor != null)
+			if (this.monitor != null) {
 				this.monitor.removeListener(this);
+			}
 			this.terminal.removeContainer(this);
 		}
 	}
@@ -122,60 +117,55 @@ public class ContainerFluidTerminal extends Container implements
 	}
 
 	@Override
-	public void postChange(IBaseMonitor<IAEFluidStack> monitor,
-			Iterable<IAEFluidStack> change, BaseActionSource actionSource) {
-		this.fluidStackList = ((IMEMonitor<IAEFluidStack>) monitor)
-				.getStorageList();
-		new PacketFluidTerminal(this.player, this.fluidStackList)
-				.sendPacketToPlayer(this.player);
+	public void postChange(IBaseMonitor<IAEFluidStack> monitor, Iterable<IAEFluidStack> change, BaseActionSource actionSource) {
+		this.fluidStackList = ((IMEMonitor<IAEFluidStack>) monitor).getStorageList();
+		new PacketFluidTerminal(this.player, this.fluidStackList).sendPacketToPlayer(this.player);
 	}
 
 	public void receiveSelectedFluid(Fluid _selectedFluid) {
 		this.selectedFluid = _selectedFluid;
-		if (this.guiFluidTerminal != null)
+		if (this.guiFluidTerminal != null) {
 			this.guiFluidTerminal.updateSelectedFluid();
+		}
 	}
 
 	public void setGui(GuiFluidTerminal _guiFluidTerminal) {
-		if (_guiFluidTerminal != null)
+		if (_guiFluidTerminal != null) {
 			this.guiFluidTerminal = _guiFluidTerminal;
+		}
 	}
 
 	@Override
 	public void setSelectedFluid(Fluid _selectedFluid) {
-		new PacketFluidTerminal(this.player, _selectedFluid, this.terminal)
-				.sendPacketToServer();
+		new PacketFluidTerminal(this.player, _selectedFluid, this.terminal).sendPacketToServer();
 	}
 
 	@Override
-	public ItemStack slotClick(int slotNumber, int p_75144_2_, int p_75144_3_,
-			EntityPlayer player) {
+	public ItemStack slotClick(int slotNumber, int p_75144_2_, int p_75144_3_, EntityPlayer player) {
 		ItemStack returnStack = null;
 		boolean hasPermission = true;
 		if (slotNumber == 0 || slotNumber == 1) {
 			ItemStack stack = player.inventory.getItemStack();
-			if (stack == null) {} else {
-				if (FluidUtil.isEmpty(stack)
-						&& PermissionUtil.hasPermission(player,
-								SecurityPermissions.INJECT,
-								(IPart) getTerminal())) {} else if (FluidUtil
-						.isFilled(stack)
-						&& PermissionUtil.hasPermission(player,
-								SecurityPermissions.EXTRACT,
-								(IPart) getTerminal())) {} else {
-					ItemStack slotStack = ((Slot) this.inventorySlots
-							.get(slotNumber)).getStack();
-					if (slotStack == null)
+			if (stack == null) {
+			
+			} else {
+				if (FluidUtil.isEmpty(stack) && PermissionUtil.hasPermission(player, SecurityPermissions.INJECT, (IPart) getTerminal())) {
+				
+				} else if (FluidUtil.isFilled(stack) && PermissionUtil.hasPermission(player, SecurityPermissions.EXTRACT, (IPart) getTerminal())) {
+				
+				} else {
+					ItemStack slotStack = ((Slot) this.inventorySlots.get(slotNumber)).getStack();
+					if (slotStack == null) {
 						returnStack = null;
-					else
-						returnStack = slotStack.copy();
+					}
+					else returnStack = slotStack.copy();
 					hasPermission = false;
 				}
 			}
 		}
-		if (hasPermission)
-			returnStack = super.slotClick(slotNumber, p_75144_2_, p_75144_3_,
-					player);
+		if (hasPermission) {
+			returnStack = super.slotClick(slotNumber, p_75144_2_, p_75144_3_, player);
+		}
 		if (player instanceof EntityPlayerMP) {
 			EntityPlayerMP p = (EntityPlayerMP) player;
 			p.sendContainerToPlayer(this);
@@ -193,8 +183,9 @@ public class ContainerFluidTerminal extends Container implements
 			itemstack = itemstack1.copy();
 			if (this.terminal.getInventory().isItemValidForSlot(0, itemstack1)) {
 				if (slotnumber == 1 || slotnumber == 0) {
-					if (!mergeItemStack(itemstack1, 2, 36, false))
+					if (!mergeItemStack(itemstack1, 2, 36, false)) {
 						return null;
+					}
 				} else if (!mergeItemStack(itemstack1, 0, 1, false)) {
 					return null;
 				}
@@ -212,7 +203,8 @@ public class ContainerFluidTerminal extends Container implements
 
 	public void updateFluidList(IItemList<IAEFluidStack> _fluidStackList) {
 		this.fluidStackList = _fluidStackList;
-		if (this.guiFluidTerminal != null)
+		if (this.guiFluidTerminal != null) {
 			this.guiFluidTerminal.updateFluids();
+		}
 	}
 }
