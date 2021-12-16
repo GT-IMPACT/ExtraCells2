@@ -1,10 +1,6 @@
 package extracells.gui;
 
-import appeng.api.config.Settings;
 import appeng.api.storage.data.IAEFluidStack;
-import appeng.api.util.IConfigManager;
-import appeng.client.gui.widgets.GuiTabButton;
-import extracells.Extracells;
 import extracells.api.ECApi;
 import extracells.container.ContainerFluidTerminal;
 import extracells.gui.widget.FluidWidgetComparator;
@@ -178,6 +174,10 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
                 list.add("Sort by");
                 list.add(EnumChatFormatting.GRAY + "Name fluids (z..A)");
             }
+            if (y >= 85 && y <= 101) {
+                list.add("Update Fluids");
+                list.add(EnumChatFormatting.GRAY + "Causes update list of fluids in the gui");
+            }
         }
         if (!list.isEmpty())
             drawHoveringText(list, x2, y2, fontRendererObj);
@@ -194,6 +194,7 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
         this.buttonList.add(new GuiImgButton(1, 16, 0, this.guiLeft - 17, this.guiTop + 25, "Total capacity (1..9)"));
         this.buttonList.add(new GuiImgButton(2, 0, 16, this.guiLeft - 17, this.guiTop + 45, "Name fluids (A..z)"));
         this.buttonList.add(new GuiImgButton(3, 16, 16, this.guiLeft - 17, this.guiTop + 65, "Name fluids (z..A)"));
+        this.buttonList.add(new GuiImgButton(4, 32, 16, this.guiLeft - 17, this.guiTop + 85, "Update Fluids"));
 
         updateFluids();
         this.searchbar = new GuiTextField(this.fontRendererObj, this.guiLeft + 81, this.guiTop + 6, 88, 10) {
@@ -230,6 +231,10 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
                 break;
             case 3:
                 this.terminal.sortingOrder = 3;
+                break;
+            case 4:
+                new PacketFluidTerminal(this.player, this.terminal).sendPacketToServer();
+                updateFluids();
                 break;
         }
     }

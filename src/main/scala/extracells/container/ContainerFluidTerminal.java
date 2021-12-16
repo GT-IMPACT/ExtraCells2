@@ -102,6 +102,7 @@ public class ContainerFluidTerminal extends Container implements IMEMonitorHandl
 
 	@Override
 	public void onContainerClosed(EntityPlayer entityPlayer) {
+		forceFluidUpdate();
 		super.onContainerClosed(entityPlayer);
 		if (!entityPlayer.worldObj.isRemote) {
 			if (this.monitor != null) {
