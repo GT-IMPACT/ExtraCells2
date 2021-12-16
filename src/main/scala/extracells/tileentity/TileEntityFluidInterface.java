@@ -751,6 +751,18 @@ public class TileEntityFluidInterface extends TileBase implements
 			this.inventory.readFromNBT(tag.getCompoundTag("inventory"));
 		if (tag.hasKey("export"))
 			readOutputFromNBT(tag.getCompoundTag("export"));
+		
+		for (int i = 0; i < tanks.length; i++) {
+			if (!tag.hasKey("notShittyFluidID" + i)) {
+				continue;
+			}
+			Fluid fluid = FluidRegistry.getFluid(tag.getString("notShittyFluidID" + i));
+			if (fluid == null) {
+				continue;
+			}
+			int id = FluidRegistry.getFluidID(fluid);
+			fluidFilter[i] = id;
+		}
 	}
 
 	private void readOutputFromNBT(NBTTagCompound tag) {
@@ -1028,5 +1040,14 @@ public class TileEntityFluidInterface extends TileBase implements
 		NBTTagCompound inventory = new NBTTagCompound();
 		this.inventory.writeToNBT(inventory);
 		tag.setTag("inventory", inventory);
+		
+		for (int i = 0; i < tanks.length; i++) {
+			int id = fluidFilter[i];
+			Fluid fluid = FluidRegistry.getFluid(id);
+			if (fluid == null) {
+				continue;
+			}
+			tag.setString("notShittyFluidID" + i, FluidRegistry.getFluidName(fluid));
+		}
 	}
 }
