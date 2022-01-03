@@ -245,10 +245,10 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
                 updateFluids();
                 break;
             case 5:
-                this.currentScroll++;
+                this.currentScroll--;
                 break;
             case 6:
-                this.currentScroll--;
+                this.currentScroll++;
                 break;
         }
     }
