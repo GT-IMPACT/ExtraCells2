@@ -2,6 +2,7 @@ package extracells.block;
 
 import appeng.api.implementations.items.IAEWrench;
 import buildcraft.api.tools.IToolWrench;
+import cpw.mods.fml.common.Optional;
 import extracells.network.ChannelHandler;
 import extracells.registries.BlockEnum;
 import extracells.render.RenderHandler;
@@ -24,6 +25,7 @@ import net.minecraftforge.fluids.FluidStack;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.Loader;
 
+@Optional.Interface(iface = "gregtech.api.items.GT_MetaGenerated_Tool", modid = "gregtech")
 public class BlockCertusTank extends BlockEC {
 
 	IIcon breakIcon;
@@ -114,6 +116,17 @@ public class BlockCertusTank extends BlockEC {
 	public boolean isOpaqueCube() {
 		return false;
 	}
+	
+	@Optional.Method(modid = "gregtech")
+	public boolean gtWrench(ItemStack current, World worldObj, int x, int y, int z, EntityPlayer entityplayer) {
+		if (current.getItem() instanceof GT_MetaGenerated_Tool && ((GT_MetaGenerated_Tool) current.getItem()).canWrench(entityplayer, x, y, z)) {
+			dropBlockAsItem(worldObj, x, y, z, getDropWithNBT(worldObj, x, y, z));
+			worldObj.setBlockToAir(x, y, z);
+			((GT_MetaGenerated_Tool) current.getItem()).wrenchUsed(entityplayer, x, y, z);
+			return true;
+		}
+		return false;
+	}
 
 	@Override
 	public boolean onBlockActivated(World worldObj, int x, int y, int z,
@@ -123,36 +136,22 @@ public class BlockCertusTank extends BlockEC {
 
 		if (entityplayer.isSneaking() && current != null) {
 			try {
-				if (current.getItem() instanceof IToolWrench
-						&& ((IToolWrench) current.getItem()).canWrench(
-						entityplayer, x, y, z)) {
-					dropBlockAsItem(worldObj, x, y, z,
-							getDropWithNBT(worldObj, x, y, z));
+				if (current.getItem() instanceof IToolWrench && ((IToolWrench) current.getItem()).canWrench(entityplayer, x, y, z)) {
+					dropBlockAsItem(worldObj, x, y, z, getDropWithNBT(worldObj, x, y, z));
 					worldObj.setBlockToAir(x, y, z);
-					((IToolWrench) current.getItem()).wrenchUsed(entityplayer,
-							x, y, z);
+					((IToolWrench) current.getItem()).wrenchUsed(entityplayer, x, y, z);
 					return true;
 				}
 			} catch (Throwable e) {
 				// No IToolWrench
 			}
-			if (current.getItem() instanceof IAEWrench
-					&& ((IAEWrench) current.getItem()).canWrench(current,
-					entityplayer, x, y, z)) {
-				dropBlockAsItem(worldObj, x, y, z,
-						getDropWithNBT(worldObj, x, y, z));
+			if (current.getItem() instanceof IAEWrench && ((IAEWrench) current.getItem()).canWrench(current, entityplayer, x, y, z)) {
+				dropBlockAsItem(worldObj, x, y, z, getDropWithNBT(worldObj, x, y, z));
 				worldObj.setBlockToAir(x, y, z);
 				return true;
 			}
 			try {
-				if (current.getItem() instanceof GT_MetaGenerated_Tool
-						&& ((GT_MetaGenerated_Tool) current.getItem()).canWrench(
-						entityplayer, x, y, z)) {
-					dropBlockAsItem(worldObj, x, y, z,
-							getDropWithNBT(worldObj, x, y, z));
-					worldObj.setBlockToAir(x, y, z);
-					((GT_MetaGenerated_Tool) current.getItem()).wrenchUsed(entityplayer,
-							x, y, z);
+				if (gtWrench(current, worldObj, x, y, z, entityplayer)) {
 					return true;
 				}
 			} catch (Throwable e) {
