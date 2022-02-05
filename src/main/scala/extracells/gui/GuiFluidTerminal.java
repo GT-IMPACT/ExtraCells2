@@ -178,12 +178,6 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
                 list.add("Update Fluids");
                 list.add(EnumChatFormatting.GRAY + "Causes update list of fluids in the gui");
             }
-            if (y >= 105 && y <= 121) {
-                list.add("Scroll Up");
-            }
-            if (y >= 125 && y <= 141) {
-                list.add("Scroll Down");
-            }
         }
         if (!list.isEmpty())
             drawHoveringText(list, x2, y2, fontRendererObj);
@@ -201,8 +195,6 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
         this.buttonList.add(new GuiImgButton(2, 0, 16, this.guiLeft - 17, this.guiTop + 45, "Name fluids (A..z)"));
         this.buttonList.add(new GuiImgButton(3, 16, 16, this.guiLeft - 17, this.guiTop + 65, "Name fluids (z..A)"));
         this.buttonList.add(new GuiImgButton(4, 32, 16, this.guiLeft - 17, this.guiTop + 85, "Update Fluids"));
-        this.buttonList.add(new GuiImgButton(5, 0, 32, this.guiLeft - 17, this.guiTop + 105, "Up"));
-        this.buttonList.add(new GuiImgButton(6, 16, 32, this.guiLeft - 17, this.guiTop + 125, "Down"));
 
         updateFluids();
         this.searchbar = new GuiTextField(this.fontRendererObj, this.guiLeft + 81, this.guiTop + 6, 88, 10) {
@@ -243,12 +235,6 @@ public class GuiFluidTerminal extends GuiContainer implements IFluidSelectorGui 
             case 4:
                 new PacketFluidTerminal(this.player, this.terminal).sendPacketToServer();
                 updateFluids();
-                break;
-            case 5:
-                this.currentScroll--;
-                break;
-            case 6:
-                this.currentScroll++;
                 break;
         }
     }
